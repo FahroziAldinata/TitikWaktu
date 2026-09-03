@@ -1,0 +1,70 @@
+name: titik_waktu
+description: Aplikasi Jadwal & Alarm Kegiatan dengan pengulangan fleksibel
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+  
+  # Local Database
+  drift: ^2.14.1
+  sqlite3_flutter_libs: ^0.5.18
+  
+  # Alarm & Notifications
+  android_alarm_manager_plus: ^3.0.4
+  flutter_local_notifications: ^17.2.1
+  
+  # Recurrence Rules
+  rrule: ^0.2.12
+  
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.2.1
+  path_provider: ^2.1.2
+  permission_handler: ^11.1.0
+  
+  # UI Components
+  flutter_slidable: ^3.0.1
+  flutter_staggered_animations: ^1.1.1
+  go_router: ^13.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  
+  # Code Generation
+  build_runner: ^2.4.7
+  drift_dev: ^2.14.1
+  riverpod_generator: ^2.3.9
+  json_serializable: ^6.7.1
+  
+  # Testing
+  mocktail: ^1.0.1
+  fake_async: ^1.3.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/sounds/
+    - assets/images/
+  
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

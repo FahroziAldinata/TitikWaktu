@@ -1,0 +1,21 @@
+### Flutter ###\n# Generated files\nbuild/\n.gitignore\n\n### IDE ###\n.idea/\n.vscode/\n*.swp\n*.swo\n*~
+
+### OS ###\n.DS_Store
+Thumbs.db
+
+### Project specific ###
+assets/fonts/Inter-*.ttf
+*.log
+coverage/
+.DartAnalysis
+.dart_tool/
+
+### Local development ###
+local.db
+*.db
+
+### Editor ###
+*.iml
+*.ipr
+*.iws
+*.code-workspace
