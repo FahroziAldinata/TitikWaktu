@@ -19,3 +19,6 @@ local.db
 *.ipr
 *.iws
 *.code-workspace
+
+### OpenCode ###
+.opencode/
