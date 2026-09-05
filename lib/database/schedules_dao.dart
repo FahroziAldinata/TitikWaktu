@@ -12,7 +12,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   SchedulesDao(AppDatabase db) : super(db);
 
   /// Insert a new schedule
-  Future<Schedule> insertSchedule(ScheduleCompanion schedule) async {
+  Future<Schedule> insertSchedule(SchedulesCompanion schedule) async {
     try {
       await into(schedules).insert(schedule);
       return (select(schedules)..where((t) => t.id.equals(schedule.id.value))).getSingle();
@@ -22,7 +22,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   }
 
   /// Update an existing schedule
-  Future<Schedule> updateSchedule(ScheduleCompanion schedule) async {
+  Future<Schedule> updateSchedule(SchedulesCompanion schedule) async {
     try {
       await update(schedules).replace(schedule);
       return (select(schedules)..where((t) => t.id.equals(schedule.id.value))).getSingle();
@@ -79,7 +79,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
       
       return await (select(schedules)
-        ..where((t) => t.time.isBetween(startOfDay, endOfDay))
+        ..where((t) => t.time.isBetween(Variable(startOfDay), Variable(endOfDay)))
         ..orderBy([
           (t) => OrderingTerm(expression: t.time),
         ])).get();
@@ -92,7 +92,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   Future<List<Schedule>> getSchedulesByDateRange(DateTime startDate, DateTime endDate) async {
     try {
       return await (select(schedules)
-        ..where((t) => t.time.isBetween(startDate, endDate))
+        ..where((t) => t.time.isBetween(Variable(startDate), Variable(endDate)))
         ..orderBy([
           (t) => OrderingTerm(expression: t.time),
         ])).get();
@@ -105,7 +105,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   Future<List<Schedule>> getSchedulesByNotificationType(NotificationType type) async {
     try {
       return await (select(schedules)
-        ..where((t) => t.notificationType.equals(type))
+        ..where((t) => t.notificationType.equals(type.index))
         ..orderBy([
           (t) => OrderingTerm(expression: t.time),
         ])).get();
@@ -118,7 +118,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   Future<List<Schedule>> getSchedulesByRecurrenceType(RecurrenceType type) async {
     try {
       return await (select(schedules)
-        ..where((t) => t.recurrenceType.equals(type))
+        ..where((t) => t.recurrenceType.equals(type.index))
         ..orderBy([
           (t) => OrderingTerm(expression: t.time),
         ])).get();

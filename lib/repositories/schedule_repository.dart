@@ -14,7 +14,7 @@ class ScheduleRepository {
   ScheduleRepository(this._dao);
 
   /// Insert a new schedule
-  Future<Schedule> createSchedule(ScheduleCompanion schedule) async {
+  Future<Schedule> createSchedule(SchedulesCompanion schedule) async {
     try {
       _logger.i('Creating new schedule: ${schedule.title.value}');
       final createdSchedule = await _dao.insertSchedule(schedule);
@@ -27,7 +27,7 @@ class ScheduleRepository {
   }
 
   /// Update an existing schedule
-  Future<Schedule> updateSchedule(ScheduleCompanion schedule) async {
+  Future<Schedule> updateSchedule(SchedulesCompanion schedule) async {
     try {
       _logger.i('Updating schedule: ${schedule.id.value}');
       final updatedSchedule = await _dao.updateSchedule(schedule);
@@ -274,7 +274,7 @@ class ScheduleRepository {
   }
 
   /// Bulk insert multiple schedules
-  Future<List<Schedule>> bulkInsertSchedules(List<ScheduleCompanion> schedules) async {
+  Future<List<Schedule>> bulkInsertSchedules(List<SchedulesCompanion> schedules) async {
     try {
       _logger.i('Bulk inserting ${schedules.length} schedules');
       final insertedSchedules = await executeTransaction((dao) async {
