@@ -13,6 +13,7 @@ Aplikasi Android untuk mengatur jadwal kegiatan pribadi, mirip alarm bawaan HP t
 ## 2. Masalah yang Diselesaikan
 
 Alarm/reminder bawaan HP biasanya:
+
 - Pengulangan terbatas (cuma "sekali", "harian", atau pilih hari doang)
 - Tidak bisa custom interval (misal: tiap 3 hari, tiap 2 minggu)
 - Tidak bisa exception tanggal (misal: skip kalau tanggal merah)
@@ -31,6 +32,7 @@ Kamu sendiri (personal use / power user) yang butuh manajemen jadwal harian lebi
 ## 4. Fitur Inti (Core Features)
 
 ### 4.1 Manajemen Jadwal (CRUD)
+
 - Tambah, edit, hapus, duplikat jadwal
 - Field per jadwal:
   - Judul kegiatan
@@ -44,7 +46,9 @@ Kamu sendiri (personal use / power user) yang butuh manajemen jadwal harian lebi
   - Status aktif/nonaktif (toggle tanpa hapus)
 
 ### 4.2 Sistem Pengulangan (Recurrence Engine) — Lengkap
+
 Ini bagian paling kompleks, mirip RRULE (iCalendar):
+
 - **Sekali** (tidak berulang)
 - **Harian** — tiap N hari (misal tiap 1 hari, tiap 3 hari)
 - **Mingguan** — pilih hari spesifik (Senin, Rabu, Jumat) + interval minggu (tiap 1 minggu, tiap 2 minggu)
@@ -55,18 +59,21 @@ Ini bagian paling kompleks, mirip RRULE (iCalendar):
 - **Reschedule sekali** — geser satu occurrence tanpa mengubah keseluruhan pola (seperti Google Calendar "edit this event only")
 
 ### 4.3 Sistem Notifikasi & Alarm
+
 - **Mode Alarm Penuh**: full-screen intent, bunyi keras looping, butuh aksi dismiss/snooze, tetap bunyi meski HP silent/DND (perlu izin khusus)
 - **Mode Notifikasi Biasa**: notifikasi standar Android, bisa di-swipe, bunyi sekali
 - Snooze (durasi bisa diatur: 5/10/15 menit)
 - Preview/tes suara sebelum menyimpan jadwal
 
 ### 4.4 Tampilan Jadwal
+
 - **View Harian**: daftar jadwal hari ini, urut waktu
 - **View Mingguan**: kalender mingguan, lihat semua jadwal dalam 7 hari
 - **View Bulanan** (opsional fase 2): kalender bulan penuh dengan indikator jadwal
 - Indikator visual jadwal yang sudah lewat/terlewat vs akan datang
 
 ### 4.5 Riwayat & Status
+
 - Log riwayat: jadwal mana yang sudah dijalankan/di-dismiss/di-snooze/terlewat
 - Statistik sederhana (opsional): konsistensi kegiatan per minggu
 
@@ -76,14 +83,14 @@ Ini bagian paling kompleks, mirip RRULE (iCalendar):
 
 Ini bagian yang paling sering jadi masalah di aplikasi alarm Android — harus direncanakan dari awal:
 
-| Kebutuhan | Detail |
-|---|---|
-| **Exact alarm scheduling** | Android 12+ butuh izin `SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM` |
-| **Bertahan setelah reboot** | Re-schedule semua alarm aktif saat `BOOT_COMPLETED` |
-| **Battery optimization** | Minta user whitelist app dari Doze/App Standby, atau app alarm akan meleset |
-| **Full-screen intent** | Untuk mode "alarm penuh", perlu `USE_FULL_SCREEN_INTENT` (Android 14+ makin ketat izinnya) |
-| **Background execution** | Gunakan `AlarmManager` native (via platform channel), BUKAN cuma `flutter_local_notifications` timer biasa, karena Dart isolate bisa dibunuh sistem |
-| **Foreground service** | Untuk alarm yang sedang berbunyi (looping sound + tombol dismiss di layar kunci) |
+| Kebutuhan                         | Detail                                                                                                                                                 |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Exact alarm scheduling**  | Android 12+ butuh izin`SCHEDULE_EXACT_ALARM` / `USE_EXACT_ALARM`                                                                                   |
+| **Bertahan setelah reboot** | Re-schedule semua alarm aktif saat`BOOT_COMPLETED`                                                                                                   |
+| **Battery optimization**    | Minta user whitelist app dari Doze/App Standby, atau app alarm akan meleset                                                                            |
+| **Full-screen intent**      | Untuk mode "alarm penuh", perlu`USE_FULL_SCREEN_INTENT` (Android 14+ makin ketat izinnya)                                                            |
+| **Background execution**    | Gunakan`AlarmManager` native (via platform channel), BUKAN cuma `flutter_local_notifications` timer biasa, karena Dart isolate bisa dibunuh sistem |
+| **Foreground service**      | Untuk alarm yang sedang berbunyi (looping sound + tombol dismiss di layar kunci)                                                                       |
 
 ---
 
@@ -101,11 +108,13 @@ Ini bagian yang paling sering jadi masalah di aplikasi alarm Android — harus d
 ## 7. Roadmap Pengembangan
 
 ### Fase 0 — Persiapan (1 minggu)
+
 - Setup project Flutter, struktur folder, state management
 - Setup Drift/Isar schema: tabel `schedules`, `recurrence_rules`, `exception_dates`, `history_log`
 - Setup izin Android (exact alarm, full-screen intent, boot receiver, battery optimization)
 
 ### Fase 1 — MVP Jadwal Sederhana (2-3 minggu)
+
 - CRUD jadwal dasar (judul, waktu, tanggal)
 - Pengulangan sederhana dulu: sekali, harian, mingguan (pilih hari)
 - Notifikasi biasa (belum alarm full-screen)
@@ -115,24 +124,28 @@ Ini bagian yang paling sering jadi masalah di aplikasi alarm Android — harus d
 **Goal fase ini: alarm bisa jalan reliable dulu, sebelum nambah fitur kompleks.**
 
 ### Fase 2 — Recurrence Engine Lengkap (2 minggu)
+
 - Tambah: custom interval, bulanan, exception dates, end date/count
 - Integrasi library `rrule` atau bangun sendiri recurrence resolver
 - Edit "this occurrence only" vs "all occurrences"
 - View mingguan (kalender 7 hari)
 
 ### Fase 3 — Mode Alarm Penuh (2 minggu)
+
 - Full-screen intent + foreground service untuk alarm looping
 - Layar dismiss/snooze kayak alarm bangun tidur
 - Toggle per-jadwal: alarm penuh vs notifikasi biasa
 - Custom suara alarm
 
 ### Fase 4 — Polish & Riwayat (1-2 minggu)
+
 - Riwayat/log status jadwal (dijalankan/terlewat/snooze)
 - View bulanan (opsional)
 - Kategori/label warna
 - Testing menyeluruh di berbagai versi Android (khususnya battery optimization berbagai vendor: Xiaomi/Oppo/Samsung terkenal agresif membunuh background alarm)
 
 ### Fase 5 — Cloud Sync (opsional, belakangan)
+
 - Setup Firebase Auth + Firestore
 - Sync jadwal antar device
 - Konflik resolution (last-write-wins atau merge)
@@ -154,3 +167,4 @@ Ini bagian yang paling sering jadi masalah di aplikasi alarm Android — harus d
 - Nama & branding aplikasi
 - Target versi Android minimum (misal minSdk 26 ke atas, biar lebih mudah handle exact alarm)
 - Apakah butuh onboarding/tutorial untuk minta izin battery optimization & full-screen intent di awal pakai?
+- TitikWaktu project setup continuation approval

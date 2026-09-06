@@ -6,10 +6,10 @@ import 'package:titik_waktu/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await NotificationService().initialize();
   await AlarmService().initialize();
-  
+
   runApp(
     const ProviderScope(
       child: TitikWaktuApp(),

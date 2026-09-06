@@ -4,8 +4,6 @@ class AppTheme {
   AppTheme._();
   
   static const _primaryColor = Color(0xFF6750A4);
-  static const _secondaryColor = Color(0xFF625B71);
-  static const _tertiaryColor = Color(0xFF7D5260);
   
   static final lightTheme = ThemeData(
     useMaterial3: true,
@@ -18,7 +16,7 @@ class AppTheme {
       centerTitle: true,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -53,7 +51,7 @@ class AppTheme {
       centerTitle: true,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

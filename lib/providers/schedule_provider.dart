@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:titik_waktu/models/schedule.dart';
+import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/services/storage_service.dart';
 
 final storageServiceProvider = Provider<StorageService>((ref) {
@@ -56,7 +56,7 @@ final dailySchedulesProvider = Provider<AsyncValue<List<Schedule>>>((ref) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     return schedules.where((s) {
-      final scheduleDate = DateTime(s.startDate.year, s.startDate.month, s.startDate.day);
+      final scheduleDate = DateTime(s.startDate!.year, s.startDate!.month, s.startDate!.day);
       return scheduleDate.isAtSameMomentAs(today) && s.isActive;
     }).toList()..sort((a, b) => a.time.compareTo(b.time));
   });

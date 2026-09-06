@@ -1,7 +1,7 @@
 import 'package:logger/logger.dart';
 import '../database/schedules_dao.dart';
 import '../database/database.dart';
-import '../models/schedule.dart';
+import '../models/schedule_enums.dart';
 
 /// ScheduleRepository - Centralized data access layer for Schedule entities
 /// 
@@ -17,9 +17,10 @@ class ScheduleRepository {
   Future<Schedule> createSchedule(SchedulesCompanion schedule) async {
     try {
       _logger.i('Creating new schedule: ${schedule.title.value}');
-      final createdSchedule = await _dao.insertSchedule(schedule);
-      _logger.i('Schedule created successfully: ${createdSchedule.id}');
-      return createdSchedule;
+      final createdId = await _dao.insertSchedule(schedule);
+      final createdSchedule = await _dao.getScheduleById(createdId);
+      _logger.i('Schedule created successfully: ${createdSchedule?.id}');
+      return createdSchedule!;
     } catch (e, stackTrace) {
       _logger.e('Failed to create schedule', error: e, stackTrace: stackTrace);
       rethrow;
@@ -30,9 +31,10 @@ class ScheduleRepository {
   Future<Schedule> updateSchedule(SchedulesCompanion schedule) async {
     try {
       _logger.i('Updating schedule: ${schedule.id.value}');
-      final updatedSchedule = await _dao.updateSchedule(schedule);
-      _logger.i('Schedule updated successfully: ${updatedSchedule.id}');
-      return updatedSchedule;
+      final updatedId = await _dao.updateSchedule(schedule);
+      final updatedSchedule = await _dao.getScheduleById(updatedId);
+      _logger.i('Schedule updated successfully: ${updatedSchedule?.id}');
+      return updatedSchedule!;
     } catch (e, stackTrace) {
       _logger.e('Failed to update schedule', error: e, stackTrace: stackTrace);
       rethrow;
@@ -43,7 +45,10 @@ class ScheduleRepository {
   Future<bool> deleteSchedule(String id) async {
     try {
       _logger.i('Deleting schedule: $id');
-      final result = await _dao.deleteSchedule(id);
+      final schedule = await _dao.getScheduleById(int.parse(id));
+      if (schedule == null) return false;
+      
+      final result = await _dao.deleteSchedule(SchedulesCompanion(id: Value(schedule.id)));
       _logger.i('Schedule deleted successfully: $id');
       return result > 0;
     } catch (e, stackTrace) {
@@ -299,8 +304,12 @@ class ScheduleRepository {
       _logger.i('Bulk deleting ${scheduleIds.length} schedules');
       final deletedCount = await executeTransaction((dao) async {
         var count = 0;
-        for (final id in scheduleIds) {
-          count += await dao.deleteSchedule(id);
+        for (final idStr in scheduleIds) {
+          final id = int.parse(idStr);
+          final schedule = await dao.getScheduleById(id);
+          if (schedule != null) {
+            count += await dao.deleteSchedule(SchedulesCompanion(id: Value(schedule.id)));
+          }
         }
         return count;
       });

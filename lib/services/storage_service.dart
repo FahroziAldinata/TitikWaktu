@@ -1,4 +1,4 @@
-import 'package:titik_waktu/models/schedule.dart';
+import 'package:titik_waktu/database/database.dart';
 
 class StorageService {
   final List<Schedule> _schedules = [];
@@ -33,7 +33,7 @@ class StorageService {
   Future<List<Schedule>> getSchedulesByDate(DateTime date) async {
     final targetDate = DateTime(date.year, date.month, date.day);
     return _schedules.where((s) {
-      final scheduleDate = DateTime(s.startDate.year, s.startDate.month, s.startDate.day);
+      final scheduleDate = DateTime(s.startDate!.year, s.startDate!.month, s.startDate!.day);
       return scheduleDate.isAtSameMomentAs(targetDate);
     }).toList();
   }

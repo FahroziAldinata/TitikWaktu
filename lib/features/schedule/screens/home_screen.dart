@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:titik_waktu/models/schedule.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -54,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: schedule.color != null
-                        ? Color(int.parse(schedule.color!.replaceFirst('#', '0xFF')))
+                        ? Color(schedule.color!)
                         : Theme.of(context).colorScheme.primary,
                     child: Icon(
                       schedule.notificationType == NotificationType.fullAlarm
@@ -73,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                   trailing: Switch(
                     value: schedule.isActive,
                     onChanged: (value) {
-                      ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id);
+                      ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id.toString());
                     },
                   ),
                   onTap: () {

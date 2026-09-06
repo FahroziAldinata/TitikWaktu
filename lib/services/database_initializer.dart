@@ -52,7 +52,7 @@ class DatabaseInitializer {
           await _backupDatabase();
 
           try {
-            final m = db.createMigrator();
+            final m = Migrator(db);
             await _runMigrationsDown(m, db, details.versionBefore!, details.versionNow);
             print('Database successfully downgraded to v${details.versionNow}');
           } catch (e) {

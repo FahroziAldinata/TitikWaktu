@@ -11,17 +11,18 @@ class $SchedulesTable extends Schedules
   $SchedulesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
       'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
       'title', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 100),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _descriptionMeta =
       const VerificationMeta('description');
   @override
@@ -37,21 +38,22 @@ class $SchedulesTable extends Schedules
       const VerificationMeta('startDate');
   @override
   late final GeneratedColumn<DateTime> startDate = GeneratedColumn<DateTime>(
-      'start_date', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      'start_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _endDateMeta =
       const VerificationMeta('endDate');
   @override
   late final GeneratedColumn<DateTime> endDate = GeneratedColumn<DateTime>(
       'end_date', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _notificationTypeMeta =
+      const VerificationMeta('notificationType');
   @override
-  late final GeneratedColumnWithTypeConverter<NotificationType, int>
-      notificationType = GeneratedColumn<int>(
-              'notification_type', aliasedName, false,
-              type: DriftSqlType.int, requiredDuringInsert: true)
-          .withConverter<NotificationType>(
-              $SchedulesTable.$converternotificationType);
+  late final GeneratedColumn<int> notificationType = GeneratedColumn<int>(
+      'notification_type', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _soundPathMeta =
       const VerificationMeta('soundPath');
   @override
@@ -60,9 +62,11 @@ class $SchedulesTable extends Schedules
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _colorMeta = const VerificationMeta('color');
   @override
-  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+  late final GeneratedColumn<int> color = GeneratedColumn<int>(
       'color', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0xFFFFFFFF));
   static const VerificationMeta _isActiveMeta =
       const VerificationMeta('isActive');
   @override
@@ -73,13 +77,14 @@ class $SchedulesTable extends Schedules
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _recurrenceTypeMeta =
+      const VerificationMeta('recurrenceType');
   @override
-  late final GeneratedColumnWithTypeConverter<RecurrenceType, int>
-      recurrenceType = GeneratedColumn<int>(
-              'recurrence_type', aliasedName, false,
-              type: DriftSqlType.int, requiredDuringInsert: true)
-          .withConverter<RecurrenceType>(
-              $SchedulesTable.$converterrecurrenceType);
+  late final GeneratedColumn<int> recurrenceType = GeneratedColumn<int>(
+      'recurrence_type', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _recurrenceRuleMeta =
       const VerificationMeta('recurrenceRule');
   @override
@@ -90,16 +95,14 @@ class $SchedulesTable extends Schedules
       const VerificationMeta('interval');
   @override
   late final GeneratedColumn<int> interval = GeneratedColumn<int>(
-      'interval', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(1));
+      'interval', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _daysOfWeekMeta =
       const VerificationMeta('daysOfWeek');
   @override
-  late final GeneratedColumn<String> daysOfWeek = GeneratedColumn<String>(
+  late final GeneratedColumn<int> daysOfWeek = GeneratedColumn<int>(
       'days_of_week', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _dayOfMonthMeta =
       const VerificationMeta('dayOfMonth');
   @override
@@ -109,9 +112,9 @@ class $SchedulesTable extends Schedules
   static const VerificationMeta _monthPatternMeta =
       const VerificationMeta('monthPattern');
   @override
-  late final GeneratedColumn<String> monthPattern = GeneratedColumn<String>(
+  late final GeneratedColumn<int> monthPattern = GeneratedColumn<int>(
       'month_pattern', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _endCountMeta =
       const VerificationMeta('endCount');
   @override
@@ -135,13 +138,17 @@ class $SchedulesTable extends Schedules
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -178,8 +185,6 @@ class $SchedulesTable extends Schedules
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -202,12 +207,16 @@ class $SchedulesTable extends Schedules
     if (data.containsKey('start_date')) {
       context.handle(_startDateMeta,
           startDate.isAcceptableOrUnknown(data['start_date']!, _startDateMeta));
-    } else if (isInserting) {
-      context.missing(_startDateMeta);
     }
     if (data.containsKey('end_date')) {
       context.handle(_endDateMeta,
           endDate.isAcceptableOrUnknown(data['end_date']!, _endDateMeta));
+    }
+    if (data.containsKey('notification_type')) {
+      context.handle(
+          _notificationTypeMeta,
+          notificationType.isAcceptableOrUnknown(
+              data['notification_type']!, _notificationTypeMeta));
     }
     if (data.containsKey('sound_path')) {
       context.handle(_soundPathMeta,
@@ -220,6 +229,12 @@ class $SchedulesTable extends Schedules
     if (data.containsKey('is_active')) {
       context.handle(_isActiveMeta,
           isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
+    }
+    if (data.containsKey('recurrence_type')) {
+      context.handle(
+          _recurrenceTypeMeta,
+          recurrenceType.isAcceptableOrUnknown(
+              data['recurrence_type']!, _recurrenceTypeMeta));
     }
     if (data.containsKey('recurrence_rule')) {
       context.handle(
@@ -268,14 +283,10 @@ class $SchedulesTable extends Schedules
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
     }
     return context;
   }
@@ -287,7 +298,7 @@ class $SchedulesTable extends Schedules
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Schedule(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       description: attachedDatabase.typeMapping
@@ -295,31 +306,29 @@ class $SchedulesTable extends Schedules
       time: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}time'])!,
       startDate: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date'])!,
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date']),
       endDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}end_date']),
-      notificationType: $SchedulesTable.$converternotificationType.fromSql(
-          attachedDatabase.typeMapping.read(
-              DriftSqlType.int, data['${effectivePrefix}notification_type'])!),
+      notificationType: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}notification_type']),
       soundPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}sound_path']),
       color: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}color']),
+          .read(DriftSqlType.int, data['${effectivePrefix}color']),
       isActive: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
-      recurrenceType: $SchedulesTable.$converterrecurrenceType.fromSql(
-          attachedDatabase.typeMapping.read(
-              DriftSqlType.int, data['${effectivePrefix}recurrence_type'])!),
+      recurrenceType: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}recurrence_type']),
       recurrenceRule: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}recurrence_rule']),
       interval: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}interval'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}interval']),
       daysOfWeek: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}days_of_week']),
+          .read(DriftSqlType.int, data['${effectivePrefix}days_of_week']),
       dayOfMonth: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}day_of_month']),
       monthPattern: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}month_pattern']),
+          .read(DriftSqlType.int, data['${effectivePrefix}month_pattern']),
       endCount: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}end_count']),
       exceptionDates: attachedDatabase.typeMapping
@@ -337,31 +346,25 @@ class $SchedulesTable extends Schedules
   $SchedulesTable createAlias(String alias) {
     return $SchedulesTable(attachedDatabase, alias);
   }
-
-  static JsonTypeConverter2<NotificationType, int, int>
-      $converternotificationType =
-      const EnumIndexConverter<NotificationType>(NotificationType.values);
-  static JsonTypeConverter2<RecurrenceType, int, int> $converterrecurrenceType =
-      const EnumIndexConverter<RecurrenceType>(RecurrenceType.values);
 }
 
 class Schedule extends DataClass implements Insertable<Schedule> {
-  final String id;
+  final int id;
   final String title;
   final String? description;
   final DateTime time;
-  final DateTime startDate;
+  final DateTime? startDate;
   final DateTime? endDate;
-  final NotificationType notificationType;
+  final int? notificationType;
   final String? soundPath;
-  final String? color;
+  final int? color;
   final bool isActive;
-  final RecurrenceType recurrenceType;
+  final int? recurrenceType;
   final String? recurrenceRule;
-  final int interval;
-  final String? daysOfWeek;
+  final int? interval;
+  final int? daysOfWeek;
   final int? dayOfMonth;
-  final String? monthPattern;
+  final int? monthPattern;
   final int? endCount;
   final String? exceptionDates;
   final String? rescheduledDates;
@@ -372,15 +375,15 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       required this.title,
       this.description,
       required this.time,
-      required this.startDate,
+      this.startDate,
       this.endDate,
-      required this.notificationType,
+      this.notificationType,
       this.soundPath,
       this.color,
       required this.isActive,
-      required this.recurrenceType,
+      this.recurrenceType,
       this.recurrenceRule,
-      required this.interval,
+      this.interval,
       this.daysOfWeek,
       this.dayOfMonth,
       this.monthPattern,
@@ -392,43 +395,45 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
+    map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
     map['time'] = Variable<DateTime>(time);
-    map['start_date'] = Variable<DateTime>(startDate);
+    if (!nullToAbsent || startDate != null) {
+      map['start_date'] = Variable<DateTime>(startDate);
+    }
     if (!nullToAbsent || endDate != null) {
       map['end_date'] = Variable<DateTime>(endDate);
     }
-    {
-      map['notification_type'] = Variable<int>(
-          $SchedulesTable.$converternotificationType.toSql(notificationType));
+    if (!nullToAbsent || notificationType != null) {
+      map['notification_type'] = Variable<int>(notificationType);
     }
     if (!nullToAbsent || soundPath != null) {
       map['sound_path'] = Variable<String>(soundPath);
     }
     if (!nullToAbsent || color != null) {
-      map['color'] = Variable<String>(color);
+      map['color'] = Variable<int>(color);
     }
     map['is_active'] = Variable<bool>(isActive);
-    {
-      map['recurrence_type'] = Variable<int>(
-          $SchedulesTable.$converterrecurrenceType.toSql(recurrenceType));
+    if (!nullToAbsent || recurrenceType != null) {
+      map['recurrence_type'] = Variable<int>(recurrenceType);
     }
     if (!nullToAbsent || recurrenceRule != null) {
       map['recurrence_rule'] = Variable<String>(recurrenceRule);
     }
-    map['interval'] = Variable<int>(interval);
+    if (!nullToAbsent || interval != null) {
+      map['interval'] = Variable<int>(interval);
+    }
     if (!nullToAbsent || daysOfWeek != null) {
-      map['days_of_week'] = Variable<String>(daysOfWeek);
+      map['days_of_week'] = Variable<int>(daysOfWeek);
     }
     if (!nullToAbsent || dayOfMonth != null) {
       map['day_of_month'] = Variable<int>(dayOfMonth);
     }
     if (!nullToAbsent || monthPattern != null) {
-      map['month_pattern'] = Variable<String>(monthPattern);
+      map['month_pattern'] = Variable<int>(monthPattern);
     }
     if (!nullToAbsent || endCount != null) {
       map['end_count'] = Variable<int>(endCount);
@@ -452,22 +457,30 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           ? const Value.absent()
           : Value(description),
       time: Value(time),
-      startDate: Value(startDate),
+      startDate: startDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startDate),
       endDate: endDate == null && nullToAbsent
           ? const Value.absent()
           : Value(endDate),
-      notificationType: Value(notificationType),
+      notificationType: notificationType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notificationType),
       soundPath: soundPath == null && nullToAbsent
           ? const Value.absent()
           : Value(soundPath),
       color:
           color == null && nullToAbsent ? const Value.absent() : Value(color),
       isActive: Value(isActive),
-      recurrenceType: Value(recurrenceType),
+      recurrenceType: recurrenceType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurrenceType),
       recurrenceRule: recurrenceRule == null && nullToAbsent
           ? const Value.absent()
           : Value(recurrenceRule),
-      interval: Value(interval),
+      interval: interval == null && nullToAbsent
+          ? const Value.absent()
+          : Value(interval),
       daysOfWeek: daysOfWeek == null && nullToAbsent
           ? const Value.absent()
           : Value(daysOfWeek),
@@ -495,24 +508,22 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Schedule(
-      id: serializer.fromJson<String>(json['id']),
+      id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String?>(json['description']),
       time: serializer.fromJson<DateTime>(json['time']),
-      startDate: serializer.fromJson<DateTime>(json['startDate']),
+      startDate: serializer.fromJson<DateTime?>(json['startDate']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
-      notificationType: $SchedulesTable.$converternotificationType
-          .fromJson(serializer.fromJson<int>(json['notificationType'])),
+      notificationType: serializer.fromJson<int?>(json['notificationType']),
       soundPath: serializer.fromJson<String?>(json['soundPath']),
-      color: serializer.fromJson<String?>(json['color']),
+      color: serializer.fromJson<int?>(json['color']),
       isActive: serializer.fromJson<bool>(json['isActive']),
-      recurrenceType: $SchedulesTable.$converterrecurrenceType
-          .fromJson(serializer.fromJson<int>(json['recurrenceType'])),
+      recurrenceType: serializer.fromJson<int?>(json['recurrenceType']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
-      interval: serializer.fromJson<int>(json['interval']),
-      daysOfWeek: serializer.fromJson<String?>(json['daysOfWeek']),
+      interval: serializer.fromJson<int?>(json['interval']),
+      daysOfWeek: serializer.fromJson<int?>(json['daysOfWeek']),
       dayOfMonth: serializer.fromJson<int?>(json['dayOfMonth']),
-      monthPattern: serializer.fromJson<String?>(json['monthPattern']),
+      monthPattern: serializer.fromJson<int?>(json['monthPattern']),
       endCount: serializer.fromJson<int?>(json['endCount']),
       exceptionDates: serializer.fromJson<String?>(json['exceptionDates']),
       rescheduledDates: serializer.fromJson<String?>(json['rescheduledDates']),
@@ -524,24 +535,22 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
+      'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String?>(description),
       'time': serializer.toJson<DateTime>(time),
-      'startDate': serializer.toJson<DateTime>(startDate),
+      'startDate': serializer.toJson<DateTime?>(startDate),
       'endDate': serializer.toJson<DateTime?>(endDate),
-      'notificationType': serializer.toJson<int>(
-          $SchedulesTable.$converternotificationType.toJson(notificationType)),
+      'notificationType': serializer.toJson<int?>(notificationType),
       'soundPath': serializer.toJson<String?>(soundPath),
-      'color': serializer.toJson<String?>(color),
+      'color': serializer.toJson<int?>(color),
       'isActive': serializer.toJson<bool>(isActive),
-      'recurrenceType': serializer.toJson<int>(
-          $SchedulesTable.$converterrecurrenceType.toJson(recurrenceType)),
+      'recurrenceType': serializer.toJson<int?>(recurrenceType),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
-      'interval': serializer.toJson<int>(interval),
-      'daysOfWeek': serializer.toJson<String?>(daysOfWeek),
+      'interval': serializer.toJson<int?>(interval),
+      'daysOfWeek': serializer.toJson<int?>(daysOfWeek),
       'dayOfMonth': serializer.toJson<int?>(dayOfMonth),
-      'monthPattern': serializer.toJson<String?>(monthPattern),
+      'monthPattern': serializer.toJson<int?>(monthPattern),
       'endCount': serializer.toJson<int?>(endCount),
       'exceptionDates': serializer.toJson<String?>(exceptionDates),
       'rescheduledDates': serializer.toJson<String?>(rescheduledDates),
@@ -551,22 +560,22 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   }
 
   Schedule copyWith(
-          {String? id,
+          {int? id,
           String? title,
           Value<String?> description = const Value.absent(),
           DateTime? time,
-          DateTime? startDate,
+          Value<DateTime?> startDate = const Value.absent(),
           Value<DateTime?> endDate = const Value.absent(),
-          NotificationType? notificationType,
+          Value<int?> notificationType = const Value.absent(),
           Value<String?> soundPath = const Value.absent(),
-          Value<String?> color = const Value.absent(),
+          Value<int?> color = const Value.absent(),
           bool? isActive,
-          RecurrenceType? recurrenceType,
+          Value<int?> recurrenceType = const Value.absent(),
           Value<String?> recurrenceRule = const Value.absent(),
-          int? interval,
-          Value<String?> daysOfWeek = const Value.absent(),
+          Value<int?> interval = const Value.absent(),
+          Value<int?> daysOfWeek = const Value.absent(),
           Value<int?> dayOfMonth = const Value.absent(),
-          Value<String?> monthPattern = const Value.absent(),
+          Value<int?> monthPattern = const Value.absent(),
           Value<int?> endCount = const Value.absent(),
           Value<String?> exceptionDates = const Value.absent(),
           Value<String?> rescheduledDates = const Value.absent(),
@@ -577,16 +586,19 @@ class Schedule extends DataClass implements Insertable<Schedule> {
         title: title ?? this.title,
         description: description.present ? description.value : this.description,
         time: time ?? this.time,
-        startDate: startDate ?? this.startDate,
+        startDate: startDate.present ? startDate.value : this.startDate,
         endDate: endDate.present ? endDate.value : this.endDate,
-        notificationType: notificationType ?? this.notificationType,
+        notificationType: notificationType.present
+            ? notificationType.value
+            : this.notificationType,
         soundPath: soundPath.present ? soundPath.value : this.soundPath,
         color: color.present ? color.value : this.color,
         isActive: isActive ?? this.isActive,
-        recurrenceType: recurrenceType ?? this.recurrenceType,
+        recurrenceType:
+            recurrenceType.present ? recurrenceType.value : this.recurrenceType,
         recurrenceRule:
             recurrenceRule.present ? recurrenceRule.value : this.recurrenceRule,
-        interval: interval ?? this.interval,
+        interval: interval.present ? interval.value : this.interval,
         daysOfWeek: daysOfWeek.present ? daysOfWeek.value : this.daysOfWeek,
         dayOfMonth: dayOfMonth.present ? dayOfMonth.value : this.dayOfMonth,
         monthPattern:
@@ -721,28 +733,27 @@ class Schedule extends DataClass implements Insertable<Schedule> {
 }
 
 class SchedulesCompanion extends UpdateCompanion<Schedule> {
-  final Value<String> id;
+  final Value<int> id;
   final Value<String> title;
   final Value<String?> description;
   final Value<DateTime> time;
-  final Value<DateTime> startDate;
+  final Value<DateTime?> startDate;
   final Value<DateTime?> endDate;
-  final Value<NotificationType> notificationType;
+  final Value<int?> notificationType;
   final Value<String?> soundPath;
-  final Value<String?> color;
+  final Value<int?> color;
   final Value<bool> isActive;
-  final Value<RecurrenceType> recurrenceType;
+  final Value<int?> recurrenceType;
   final Value<String?> recurrenceRule;
-  final Value<int> interval;
-  final Value<String?> daysOfWeek;
+  final Value<int?> interval;
+  final Value<int?> daysOfWeek;
   final Value<int?> dayOfMonth;
-  final Value<String?> monthPattern;
+  final Value<int?> monthPattern;
   final Value<int?> endCount;
   final Value<String?> exceptionDates;
   final Value<String?> rescheduledDates;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
-  final Value<int> rowid;
   const SchedulesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -765,20 +776,19 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.rescheduledDates = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
   });
   SchedulesCompanion.insert({
-    required String id,
+    this.id = const Value.absent(),
     required String title,
     this.description = const Value.absent(),
     required DateTime time,
-    required DateTime startDate,
+    this.startDate = const Value.absent(),
     this.endDate = const Value.absent(),
-    required NotificationType notificationType,
+    this.notificationType = const Value.absent(),
     this.soundPath = const Value.absent(),
     this.color = const Value.absent(),
     this.isActive = const Value.absent(),
-    required RecurrenceType recurrenceType,
+    this.recurrenceType = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.interval = const Value.absent(),
     this.daysOfWeek = const Value.absent(),
@@ -787,19 +797,12 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.endCount = const Value.absent(),
     this.exceptionDates = const Value.absent(),
     this.rescheduledDates = const Value.absent(),
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        title = Value(title),
-        time = Value(time),
-        startDate = Value(startDate),
-        notificationType = Value(notificationType),
-        recurrenceType = Value(recurrenceType),
-        createdAt = Value(createdAt),
-        updatedAt = Value(updatedAt);
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  })  : title = Value(title),
+        time = Value(time);
   static Insertable<Schedule> custom({
-    Expression<String>? id,
+    Expression<int>? id,
     Expression<String>? title,
     Expression<String>? description,
     Expression<DateTime>? time,
@@ -807,20 +810,19 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     Expression<DateTime>? endDate,
     Expression<int>? notificationType,
     Expression<String>? soundPath,
-    Expression<String>? color,
+    Expression<int>? color,
     Expression<bool>? isActive,
     Expression<int>? recurrenceType,
     Expression<String>? recurrenceRule,
     Expression<int>? interval,
-    Expression<String>? daysOfWeek,
+    Expression<int>? daysOfWeek,
     Expression<int>? dayOfMonth,
-    Expression<String>? monthPattern,
+    Expression<int>? monthPattern,
     Expression<int>? endCount,
     Expression<String>? exceptionDates,
     Expression<String>? rescheduledDates,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
-    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -844,33 +846,31 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       if (rescheduledDates != null) 'rescheduled_dates': rescheduledDates,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
   SchedulesCompanion copyWith(
-      {Value<String>? id,
+      {Value<int>? id,
       Value<String>? title,
       Value<String?>? description,
       Value<DateTime>? time,
-      Value<DateTime>? startDate,
+      Value<DateTime?>? startDate,
       Value<DateTime?>? endDate,
-      Value<NotificationType>? notificationType,
+      Value<int?>? notificationType,
       Value<String?>? soundPath,
-      Value<String?>? color,
+      Value<int?>? color,
       Value<bool>? isActive,
-      Value<RecurrenceType>? recurrenceType,
+      Value<int?>? recurrenceType,
       Value<String?>? recurrenceRule,
-      Value<int>? interval,
-      Value<String?>? daysOfWeek,
+      Value<int?>? interval,
+      Value<int?>? daysOfWeek,
       Value<int?>? dayOfMonth,
-      Value<String?>? monthPattern,
+      Value<int?>? monthPattern,
       Value<int?>? endCount,
       Value<String?>? exceptionDates,
       Value<String?>? rescheduledDates,
       Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt,
-      Value<int>? rowid}) {
+      Value<DateTime>? updatedAt}) {
     return SchedulesCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -893,7 +893,6 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       rescheduledDates: rescheduledDates ?? this.rescheduledDates,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -901,7 +900,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -919,22 +918,19 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       map['end_date'] = Variable<DateTime>(endDate.value);
     }
     if (notificationType.present) {
-      map['notification_type'] = Variable<int>($SchedulesTable
-          .$converternotificationType
-          .toSql(notificationType.value));
+      map['notification_type'] = Variable<int>(notificationType.value);
     }
     if (soundPath.present) {
       map['sound_path'] = Variable<String>(soundPath.value);
     }
     if (color.present) {
-      map['color'] = Variable<String>(color.value);
+      map['color'] = Variable<int>(color.value);
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
     if (recurrenceType.present) {
-      map['recurrence_type'] = Variable<int>(
-          $SchedulesTable.$converterrecurrenceType.toSql(recurrenceType.value));
+      map['recurrence_type'] = Variable<int>(recurrenceType.value);
     }
     if (recurrenceRule.present) {
       map['recurrence_rule'] = Variable<String>(recurrenceRule.value);
@@ -943,13 +939,13 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       map['interval'] = Variable<int>(interval.value);
     }
     if (daysOfWeek.present) {
-      map['days_of_week'] = Variable<String>(daysOfWeek.value);
+      map['days_of_week'] = Variable<int>(daysOfWeek.value);
     }
     if (dayOfMonth.present) {
       map['day_of_month'] = Variable<int>(dayOfMonth.value);
     }
     if (monthPattern.present) {
-      map['month_pattern'] = Variable<String>(monthPattern.value);
+      map['month_pattern'] = Variable<int>(monthPattern.value);
     }
     if (endCount.present) {
       map['end_count'] = Variable<int>(endCount.value);
@@ -965,9 +961,6 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -995,8 +988,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
           ..write('exceptionDates: $exceptionDates, ')
           ..write('rescheduledDates: $rescheduledDates, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('rowid: $rowid')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1010,61 +1002,28 @@ class $HistoryLogsTable extends HistoryLogs
   $HistoryLogsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
       'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _scheduleIdMeta =
-      const VerificationMeta('scheduleId');
-  @override
-  late final GeneratedColumn<String> scheduleId = GeneratedColumn<String>(
-      'schedule_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _scheduledTimeMeta =
-      const VerificationMeta('scheduledTime');
-  @override
-  late final GeneratedColumn<DateTime> scheduledTime =
-      GeneratedColumn<DateTime>('scheduled_time', aliasedName, false,
-          type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _triggeredAtMeta =
-      const VerificationMeta('triggeredAt');
-  @override
-  late final GeneratedColumn<DateTime> triggeredAt = GeneratedColumn<DateTime>(
-      'triggered_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  @override
-  late final GeneratedColumnWithTypeConverter<AlarmStatus, int> status =
-      GeneratedColumn<int>('status', aliasedName, false,
-              type: DriftSqlType.int, requiredDuringInsert: true)
-          .withConverter<AlarmStatus>($HistoryLogsTable.$converterstatus);
-  static const VerificationMeta _snoozeCountMeta =
-      const VerificationMeta('snoozeCount');
-  @override
-  late final GeneratedColumn<int> snoozeCount = GeneratedColumn<int>(
-      'snooze_count', aliasedName, false,
+      hasAutoIncrement: true,
       type: DriftSqlType.int,
       requiredDuringInsert: false,
-      defaultValue: const Constant(0));
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _actionMeta = const VerificationMeta('action');
   @override
-  late final GeneratedColumnWithTypeConverter<DismissType, int> dismissType =
-      GeneratedColumn<int>('dismiss_type', aliasedName, false,
-              type: DriftSqlType.int, requiredDuringInsert: true)
-          .withConverter<DismissType>($HistoryLogsTable.$converterdismissType);
-  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  late final GeneratedColumn<String> action = GeneratedColumn<String>(
+      'action', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _timestampMeta =
+      const VerificationMeta('timestamp');
   @override
-  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
-      'notes', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
+      'timestamp', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        scheduleId,
-        scheduledTime,
-        triggeredAt,
-        status,
-        snoozeCount,
-        dismissType,
-        notes
-      ];
+  List<GeneratedColumn> get $columns => [id, action, timestamp];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1077,40 +1036,16 @@ class $HistoryLogsTable extends HistoryLogs
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('action')) {
+      context.handle(_actionMeta,
+          action.isAcceptableOrUnknown(data['action']!, _actionMeta));
     } else if (isInserting) {
-      context.missing(_idMeta);
+      context.missing(_actionMeta);
     }
-    if (data.containsKey('schedule_id')) {
-      context.handle(
-          _scheduleIdMeta,
-          scheduleId.isAcceptableOrUnknown(
-              data['schedule_id']!, _scheduleIdMeta));
-    } else if (isInserting) {
-      context.missing(_scheduleIdMeta);
-    }
-    if (data.containsKey('scheduled_time')) {
-      context.handle(
-          _scheduledTimeMeta,
-          scheduledTime.isAcceptableOrUnknown(
-              data['scheduled_time']!, _scheduledTimeMeta));
-    } else if (isInserting) {
-      context.missing(_scheduledTimeMeta);
-    }
-    if (data.containsKey('triggered_at')) {
-      context.handle(
-          _triggeredAtMeta,
-          triggeredAt.isAcceptableOrUnknown(
-              data['triggered_at']!, _triggeredAtMeta));
-    }
-    if (data.containsKey('snooze_count')) {
-      context.handle(
-          _snoozeCountMeta,
-          snoozeCount.isAcceptableOrUnknown(
-              data['snooze_count']!, _snoozeCountMeta));
-    }
-    if (data.containsKey('notes')) {
-      context.handle(
-          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    if (data.containsKey('timestamp')) {
+      context.handle(_timestampMeta,
+          timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
     }
     return context;
   }
@@ -1122,23 +1057,11 @@ class $HistoryLogsTable extends HistoryLogs
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return HistoryLog(
       id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      scheduleId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}schedule_id'])!,
-      scheduledTime: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}scheduled_time'])!,
-      triggeredAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}triggered_at']),
-      status: $HistoryLogsTable.$converterstatus.fromSql(attachedDatabase
-          .typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}status'])!),
-      snoozeCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}snooze_count'])!,
-      dismissType: $HistoryLogsTable.$converterdismissType.fromSql(
-          attachedDatabase.typeMapping
-              .read(DriftSqlType.int, data['${effectivePrefix}dismiss_type'])!),
-      notes: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      action: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}action'])!,
+      timestamp: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
     );
   }
 
@@ -1146,68 +1069,28 @@ class $HistoryLogsTable extends HistoryLogs
   $HistoryLogsTable createAlias(String alias) {
     return $HistoryLogsTable(attachedDatabase, alias);
   }
-
-  static JsonTypeConverter2<AlarmStatus, int, int> $converterstatus =
-      const EnumIndexConverter<AlarmStatus>(AlarmStatus.values);
-  static JsonTypeConverter2<DismissType, int, int> $converterdismissType =
-      const EnumIndexConverter<DismissType>(DismissType.values);
 }
 
 class HistoryLog extends DataClass implements Insertable<HistoryLog> {
-  final String id;
-  final String scheduleId;
-  final DateTime scheduledTime;
-  final DateTime? triggeredAt;
-  final AlarmStatus status;
-  final int snoozeCount;
-  final DismissType dismissType;
-  final String? notes;
+  final int id;
+  final String action;
+  final DateTime timestamp;
   const HistoryLog(
-      {required this.id,
-      required this.scheduleId,
-      required this.scheduledTime,
-      this.triggeredAt,
-      required this.status,
-      required this.snoozeCount,
-      required this.dismissType,
-      this.notes});
+      {required this.id, required this.action, required this.timestamp});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['schedule_id'] = Variable<String>(scheduleId);
-    map['scheduled_time'] = Variable<DateTime>(scheduledTime);
-    if (!nullToAbsent || triggeredAt != null) {
-      map['triggered_at'] = Variable<DateTime>(triggeredAt);
-    }
-    {
-      map['status'] =
-          Variable<int>($HistoryLogsTable.$converterstatus.toSql(status));
-    }
-    map['snooze_count'] = Variable<int>(snoozeCount);
-    {
-      map['dismiss_type'] = Variable<int>(
-          $HistoryLogsTable.$converterdismissType.toSql(dismissType));
-    }
-    if (!nullToAbsent || notes != null) {
-      map['notes'] = Variable<String>(notes);
-    }
+    map['id'] = Variable<int>(id);
+    map['action'] = Variable<String>(action);
+    map['timestamp'] = Variable<DateTime>(timestamp);
     return map;
   }
 
   HistoryLogsCompanion toCompanion(bool nullToAbsent) {
     return HistoryLogsCompanion(
       id: Value(id),
-      scheduleId: Value(scheduleId),
-      scheduledTime: Value(scheduledTime),
-      triggeredAt: triggeredAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(triggeredAt),
-      status: Value(status),
-      snoozeCount: Value(snoozeCount),
-      dismissType: Value(dismissType),
-      notes:
-          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      action: Value(action),
+      timestamp: Value(timestamp),
     );
   }
 
@@ -1215,70 +1098,32 @@ class HistoryLog extends DataClass implements Insertable<HistoryLog> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return HistoryLog(
-      id: serializer.fromJson<String>(json['id']),
-      scheduleId: serializer.fromJson<String>(json['scheduleId']),
-      scheduledTime: serializer.fromJson<DateTime>(json['scheduledTime']),
-      triggeredAt: serializer.fromJson<DateTime?>(json['triggeredAt']),
-      status: $HistoryLogsTable.$converterstatus
-          .fromJson(serializer.fromJson<int>(json['status'])),
-      snoozeCount: serializer.fromJson<int>(json['snoozeCount']),
-      dismissType: $HistoryLogsTable.$converterdismissType
-          .fromJson(serializer.fromJson<int>(json['dismissType'])),
-      notes: serializer.fromJson<String?>(json['notes']),
+      id: serializer.fromJson<int>(json['id']),
+      action: serializer.fromJson<String>(json['action']),
+      timestamp: serializer.fromJson<DateTime>(json['timestamp']),
     );
   }
   @override
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'scheduleId': serializer.toJson<String>(scheduleId),
-      'scheduledTime': serializer.toJson<DateTime>(scheduledTime),
-      'triggeredAt': serializer.toJson<DateTime?>(triggeredAt),
-      'status': serializer
-          .toJson<int>($HistoryLogsTable.$converterstatus.toJson(status)),
-      'snoozeCount': serializer.toJson<int>(snoozeCount),
-      'dismissType': serializer.toJson<int>(
-          $HistoryLogsTable.$converterdismissType.toJson(dismissType)),
-      'notes': serializer.toJson<String?>(notes),
+      'id': serializer.toJson<int>(id),
+      'action': serializer.toJson<String>(action),
+      'timestamp': serializer.toJson<DateTime>(timestamp),
     };
   }
 
-  HistoryLog copyWith(
-          {String? id,
-          String? scheduleId,
-          DateTime? scheduledTime,
-          Value<DateTime?> triggeredAt = const Value.absent(),
-          AlarmStatus? status,
-          int? snoozeCount,
-          DismissType? dismissType,
-          Value<String?> notes = const Value.absent()}) =>
+  HistoryLog copyWith({int? id, String? action, DateTime? timestamp}) =>
       HistoryLog(
         id: id ?? this.id,
-        scheduleId: scheduleId ?? this.scheduleId,
-        scheduledTime: scheduledTime ?? this.scheduledTime,
-        triggeredAt: triggeredAt.present ? triggeredAt.value : this.triggeredAt,
-        status: status ?? this.status,
-        snoozeCount: snoozeCount ?? this.snoozeCount,
-        dismissType: dismissType ?? this.dismissType,
-        notes: notes.present ? notes.value : this.notes,
+        action: action ?? this.action,
+        timestamp: timestamp ?? this.timestamp,
       );
   HistoryLog copyWithCompanion(HistoryLogsCompanion data) {
     return HistoryLog(
       id: data.id.present ? data.id.value : this.id,
-      scheduleId:
-          data.scheduleId.present ? data.scheduleId.value : this.scheduleId,
-      scheduledTime: data.scheduledTime.present
-          ? data.scheduledTime.value
-          : this.scheduledTime,
-      triggeredAt:
-          data.triggeredAt.present ? data.triggeredAt.value : this.triggeredAt,
-      status: data.status.present ? data.status.value : this.status,
-      snoozeCount:
-          data.snoozeCount.present ? data.snoozeCount.value : this.snoozeCount,
-      dismissType:
-          data.dismissType.present ? data.dismissType.value : this.dismissType,
-      notes: data.notes.present ? data.notes.value : this.notes,
+      action: data.action.present ? data.action.value : this.action,
+      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
     );
   }
 
@@ -1286,114 +1131,55 @@ class HistoryLog extends DataClass implements Insertable<HistoryLog> {
   String toString() {
     return (StringBuffer('HistoryLog(')
           ..write('id: $id, ')
-          ..write('scheduleId: $scheduleId, ')
-          ..write('scheduledTime: $scheduledTime, ')
-          ..write('triggeredAt: $triggeredAt, ')
-          ..write('status: $status, ')
-          ..write('snoozeCount: $snoozeCount, ')
-          ..write('dismissType: $dismissType, ')
-          ..write('notes: $notes')
+          ..write('action: $action, ')
+          ..write('timestamp: $timestamp')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, scheduleId, scheduledTime, triggeredAt,
-      status, snoozeCount, dismissType, notes);
+  int get hashCode => Object.hash(id, action, timestamp);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is HistoryLog &&
           other.id == this.id &&
-          other.scheduleId == this.scheduleId &&
-          other.scheduledTime == this.scheduledTime &&
-          other.triggeredAt == this.triggeredAt &&
-          other.status == this.status &&
-          other.snoozeCount == this.snoozeCount &&
-          other.dismissType == this.dismissType &&
-          other.notes == this.notes);
+          other.action == this.action &&
+          other.timestamp == this.timestamp);
 }
 
 class HistoryLogsCompanion extends UpdateCompanion<HistoryLog> {
-  final Value<String> id;
-  final Value<String> scheduleId;
-  final Value<DateTime> scheduledTime;
-  final Value<DateTime?> triggeredAt;
-  final Value<AlarmStatus> status;
-  final Value<int> snoozeCount;
-  final Value<DismissType> dismissType;
-  final Value<String?> notes;
-  final Value<int> rowid;
+  final Value<int> id;
+  final Value<String> action;
+  final Value<DateTime> timestamp;
   const HistoryLogsCompanion({
     this.id = const Value.absent(),
-    this.scheduleId = const Value.absent(),
-    this.scheduledTime = const Value.absent(),
-    this.triggeredAt = const Value.absent(),
-    this.status = const Value.absent(),
-    this.snoozeCount = const Value.absent(),
-    this.dismissType = const Value.absent(),
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
+    this.action = const Value.absent(),
+    this.timestamp = const Value.absent(),
   });
   HistoryLogsCompanion.insert({
-    required String id,
-    required String scheduleId,
-    required DateTime scheduledTime,
-    this.triggeredAt = const Value.absent(),
-    required AlarmStatus status,
-    this.snoozeCount = const Value.absent(),
-    required DismissType dismissType,
-    this.notes = const Value.absent(),
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        scheduleId = Value(scheduleId),
-        scheduledTime = Value(scheduledTime),
-        status = Value(status),
-        dismissType = Value(dismissType);
+    this.id = const Value.absent(),
+    required String action,
+    this.timestamp = const Value.absent(),
+  }) : action = Value(action);
   static Insertable<HistoryLog> custom({
-    Expression<String>? id,
-    Expression<String>? scheduleId,
-    Expression<DateTime>? scheduledTime,
-    Expression<DateTime>? triggeredAt,
-    Expression<int>? status,
-    Expression<int>? snoozeCount,
-    Expression<int>? dismissType,
-    Expression<String>? notes,
-    Expression<int>? rowid,
+    Expression<int>? id,
+    Expression<String>? action,
+    Expression<DateTime>? timestamp,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (scheduleId != null) 'schedule_id': scheduleId,
-      if (scheduledTime != null) 'scheduled_time': scheduledTime,
-      if (triggeredAt != null) 'triggered_at': triggeredAt,
-      if (status != null) 'status': status,
-      if (snoozeCount != null) 'snooze_count': snoozeCount,
-      if (dismissType != null) 'dismiss_type': dismissType,
-      if (notes != null) 'notes': notes,
-      if (rowid != null) 'rowid': rowid,
+      if (action != null) 'action': action,
+      if (timestamp != null) 'timestamp': timestamp,
     });
   }
 
   HistoryLogsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? scheduleId,
-      Value<DateTime>? scheduledTime,
-      Value<DateTime?>? triggeredAt,
-      Value<AlarmStatus>? status,
-      Value<int>? snoozeCount,
-      Value<DismissType>? dismissType,
-      Value<String?>? notes,
-      Value<int>? rowid}) {
+      {Value<int>? id, Value<String>? action, Value<DateTime>? timestamp}) {
     return HistoryLogsCompanion(
       id: id ?? this.id,
-      scheduleId: scheduleId ?? this.scheduleId,
-      scheduledTime: scheduledTime ?? this.scheduledTime,
-      triggeredAt: triggeredAt ?? this.triggeredAt,
-      status: status ?? this.status,
-      snoozeCount: snoozeCount ?? this.snoozeCount,
-      dismissType: dismissType ?? this.dismissType,
-      notes: notes ?? this.notes,
-      rowid: rowid ?? this.rowid,
+      action: action ?? this.action,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 
@@ -1401,33 +1187,13 @@ class HistoryLogsCompanion extends UpdateCompanion<HistoryLog> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     if (id.present) {
-      map['id'] = Variable<String>(id.value);
+      map['id'] = Variable<int>(id.value);
     }
-    if (scheduleId.present) {
-      map['schedule_id'] = Variable<String>(scheduleId.value);
+    if (action.present) {
+      map['action'] = Variable<String>(action.value);
     }
-    if (scheduledTime.present) {
-      map['scheduled_time'] = Variable<DateTime>(scheduledTime.value);
-    }
-    if (triggeredAt.present) {
-      map['triggered_at'] = Variable<DateTime>(triggeredAt.value);
-    }
-    if (status.present) {
-      map['status'] =
-          Variable<int>($HistoryLogsTable.$converterstatus.toSql(status.value));
-    }
-    if (snoozeCount.present) {
-      map['snooze_count'] = Variable<int>(snoozeCount.value);
-    }
-    if (dismissType.present) {
-      map['dismiss_type'] = Variable<int>(
-          $HistoryLogsTable.$converterdismissType.toSql(dismissType.value));
-    }
-    if (notes.present) {
-      map['notes'] = Variable<String>(notes.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
+    if (timestamp.present) {
+      map['timestamp'] = Variable<DateTime>(timestamp.value);
     }
     return map;
   }
@@ -1436,14 +1202,8 @@ class HistoryLogsCompanion extends UpdateCompanion<HistoryLog> {
   String toString() {
     return (StringBuffer('HistoryLogsCompanion(')
           ..write('id: $id, ')
-          ..write('scheduleId: $scheduleId, ')
-          ..write('scheduledTime: $scheduledTime, ')
-          ..write('triggeredAt: $triggeredAt, ')
-          ..write('status: $status, ')
-          ..write('snoozeCount: $snoozeCount, ')
-          ..write('dismissType: $dismissType, ')
-          ..write('notes: $notes, ')
-          ..write('rowid: $rowid')
+          ..write('action: $action, ')
+          ..write('timestamp: $timestamp')
           ..write(')'))
         .toString();
   }
@@ -1454,6 +1214,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $SchedulesTable schedules = $SchedulesTable(this);
   late final $HistoryLogsTable historyLogs = $HistoryLogsTable(this);
+  late final SchedulesDao schedulesDao = SchedulesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1462,52 +1223,50 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 }
 
 typedef $$SchedulesTableCreateCompanionBuilder = SchedulesCompanion Function({
-  required String id,
+  Value<int> id,
   required String title,
   Value<String?> description,
   required DateTime time,
-  required DateTime startDate,
+  Value<DateTime?> startDate,
   Value<DateTime?> endDate,
-  required NotificationType notificationType,
+  Value<int?> notificationType,
   Value<String?> soundPath,
-  Value<String?> color,
+  Value<int?> color,
   Value<bool> isActive,
-  required RecurrenceType recurrenceType,
+  Value<int?> recurrenceType,
   Value<String?> recurrenceRule,
-  Value<int> interval,
-  Value<String?> daysOfWeek,
+  Value<int?> interval,
+  Value<int?> daysOfWeek,
   Value<int?> dayOfMonth,
-  Value<String?> monthPattern,
-  Value<int?> endCount,
-  Value<String?> exceptionDates,
-  Value<String?> rescheduledDates,
-  required DateTime createdAt,
-  required DateTime updatedAt,
-  Value<int> rowid,
-});
-typedef $$SchedulesTableUpdateCompanionBuilder = SchedulesCompanion Function({
-  Value<String> id,
-  Value<String> title,
-  Value<String?> description,
-  Value<DateTime> time,
-  Value<DateTime> startDate,
-  Value<DateTime?> endDate,
-  Value<NotificationType> notificationType,
-  Value<String?> soundPath,
-  Value<String?> color,
-  Value<bool> isActive,
-  Value<RecurrenceType> recurrenceType,
-  Value<String?> recurrenceRule,
-  Value<int> interval,
-  Value<String?> daysOfWeek,
-  Value<int?> dayOfMonth,
-  Value<String?> monthPattern,
+  Value<int?> monthPattern,
   Value<int?> endCount,
   Value<String?> exceptionDates,
   Value<String?> rescheduledDates,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
-  Value<int> rowid,
+});
+typedef $$SchedulesTableUpdateCompanionBuilder = SchedulesCompanion Function({
+  Value<int> id,
+  Value<String> title,
+  Value<String?> description,
+  Value<DateTime> time,
+  Value<DateTime?> startDate,
+  Value<DateTime?> endDate,
+  Value<int?> notificationType,
+  Value<String?> soundPath,
+  Value<int?> color,
+  Value<bool> isActive,
+  Value<int?> recurrenceType,
+  Value<String?> recurrenceRule,
+  Value<int?> interval,
+  Value<int?> daysOfWeek,
+  Value<int?> dayOfMonth,
+  Value<int?> monthPattern,
+  Value<int?> endCount,
+  Value<String?> exceptionDates,
+  Value<String?> rescheduledDates,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
 });
 
 class $$SchedulesTableFilterComposer
@@ -1519,7 +1278,7 @@ class $$SchedulesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
@@ -1537,24 +1296,22 @@ class $$SchedulesTableFilterComposer
   ColumnFilters<DateTime> get endDate => $composableBuilder(
       column: $table.endDate, builder: (column) => ColumnFilters(column));
 
-  ColumnWithTypeConverterFilters<NotificationType, NotificationType, int>
-      get notificationType => $composableBuilder(
-          column: $table.notificationType,
-          builder: (column) => ColumnWithTypeConverterFilters(column));
+  ColumnFilters<int> get notificationType => $composableBuilder(
+      column: $table.notificationType,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get soundPath => $composableBuilder(
       column: $table.soundPath, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get color => $composableBuilder(
+  ColumnFilters<int> get color => $composableBuilder(
       column: $table.color, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnFilters(column));
 
-  ColumnWithTypeConverterFilters<RecurrenceType, RecurrenceType, int>
-      get recurrenceType => $composableBuilder(
-          column: $table.recurrenceType,
-          builder: (column) => ColumnWithTypeConverterFilters(column));
+  ColumnFilters<int> get recurrenceType => $composableBuilder(
+      column: $table.recurrenceType,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get recurrenceRule => $composableBuilder(
       column: $table.recurrenceRule,
@@ -1563,13 +1320,13 @@ class $$SchedulesTableFilterComposer
   ColumnFilters<int> get interval => $composableBuilder(
       column: $table.interval, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get daysOfWeek => $composableBuilder(
+  ColumnFilters<int> get daysOfWeek => $composableBuilder(
       column: $table.daysOfWeek, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get dayOfMonth => $composableBuilder(
       column: $table.dayOfMonth, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get monthPattern => $composableBuilder(
+  ColumnFilters<int> get monthPattern => $composableBuilder(
       column: $table.monthPattern, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get endCount => $composableBuilder(
@@ -1599,7 +1356,7 @@ class $$SchedulesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get title => $composableBuilder(
@@ -1624,7 +1381,7 @@ class $$SchedulesTableOrderingComposer
   ColumnOrderings<String> get soundPath => $composableBuilder(
       column: $table.soundPath, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get color => $composableBuilder(
+  ColumnOrderings<int> get color => $composableBuilder(
       column: $table.color, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get isActive => $composableBuilder(
@@ -1641,13 +1398,13 @@ class $$SchedulesTableOrderingComposer
   ColumnOrderings<int> get interval => $composableBuilder(
       column: $table.interval, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get daysOfWeek => $composableBuilder(
+  ColumnOrderings<int> get daysOfWeek => $composableBuilder(
       column: $table.daysOfWeek, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get dayOfMonth => $composableBuilder(
       column: $table.dayOfMonth, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get monthPattern => $composableBuilder(
+  ColumnOrderings<int> get monthPattern => $composableBuilder(
       column: $table.monthPattern,
       builder: (column) => ColumnOrderings(column));
 
@@ -1678,7 +1435,7 @@ class $$SchedulesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
@@ -1696,22 +1453,20 @@ class $$SchedulesTableAnnotationComposer
   GeneratedColumn<DateTime> get endDate =>
       $composableBuilder(column: $table.endDate, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<NotificationType, int>
-      get notificationType => $composableBuilder(
-          column: $table.notificationType, builder: (column) => column);
+  GeneratedColumn<int> get notificationType => $composableBuilder(
+      column: $table.notificationType, builder: (column) => column);
 
   GeneratedColumn<String> get soundPath =>
       $composableBuilder(column: $table.soundPath, builder: (column) => column);
 
-  GeneratedColumn<String> get color =>
+  GeneratedColumn<int> get color =>
       $composableBuilder(column: $table.color, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
 
-  GeneratedColumnWithTypeConverter<RecurrenceType, int> get recurrenceType =>
-      $composableBuilder(
-          column: $table.recurrenceType, builder: (column) => column);
+  GeneratedColumn<int> get recurrenceType => $composableBuilder(
+      column: $table.recurrenceType, builder: (column) => column);
 
   GeneratedColumn<String> get recurrenceRule => $composableBuilder(
       column: $table.recurrenceRule, builder: (column) => column);
@@ -1719,13 +1474,13 @@ class $$SchedulesTableAnnotationComposer
   GeneratedColumn<int> get interval =>
       $composableBuilder(column: $table.interval, builder: (column) => column);
 
-  GeneratedColumn<String> get daysOfWeek => $composableBuilder(
+  GeneratedColumn<int> get daysOfWeek => $composableBuilder(
       column: $table.daysOfWeek, builder: (column) => column);
 
   GeneratedColumn<int> get dayOfMonth => $composableBuilder(
       column: $table.dayOfMonth, builder: (column) => column);
 
-  GeneratedColumn<String> get monthPattern => $composableBuilder(
+  GeneratedColumn<int> get monthPattern => $composableBuilder(
       column: $table.monthPattern, builder: (column) => column);
 
   GeneratedColumn<int> get endCount =>
@@ -1767,28 +1522,27 @@ class $$SchedulesTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$SchedulesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
+            Value<int> id = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> description = const Value.absent(),
             Value<DateTime> time = const Value.absent(),
-            Value<DateTime> startDate = const Value.absent(),
+            Value<DateTime?> startDate = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
-            Value<NotificationType> notificationType = const Value.absent(),
+            Value<int?> notificationType = const Value.absent(),
             Value<String?> soundPath = const Value.absent(),
-            Value<String?> color = const Value.absent(),
+            Value<int?> color = const Value.absent(),
             Value<bool> isActive = const Value.absent(),
-            Value<RecurrenceType> recurrenceType = const Value.absent(),
+            Value<int?> recurrenceType = const Value.absent(),
             Value<String?> recurrenceRule = const Value.absent(),
-            Value<int> interval = const Value.absent(),
-            Value<String?> daysOfWeek = const Value.absent(),
+            Value<int?> interval = const Value.absent(),
+            Value<int?> daysOfWeek = const Value.absent(),
             Value<int?> dayOfMonth = const Value.absent(),
-            Value<String?> monthPattern = const Value.absent(),
+            Value<int?> monthPattern = const Value.absent(),
             Value<int?> endCount = const Value.absent(),
             Value<String?> exceptionDates = const Value.absent(),
             Value<String?> rescheduledDates = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
           }) =>
               SchedulesCompanion(
             id: id,
@@ -1812,31 +1566,29 @@ class $$SchedulesTableTableManager extends RootTableManager<
             rescheduledDates: rescheduledDates,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            rowid: rowid,
           ),
           createCompanionCallback: ({
-            required String id,
+            Value<int> id = const Value.absent(),
             required String title,
             Value<String?> description = const Value.absent(),
             required DateTime time,
-            required DateTime startDate,
+            Value<DateTime?> startDate = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
-            required NotificationType notificationType,
+            Value<int?> notificationType = const Value.absent(),
             Value<String?> soundPath = const Value.absent(),
-            Value<String?> color = const Value.absent(),
+            Value<int?> color = const Value.absent(),
             Value<bool> isActive = const Value.absent(),
-            required RecurrenceType recurrenceType,
+            Value<int?> recurrenceType = const Value.absent(),
             Value<String?> recurrenceRule = const Value.absent(),
-            Value<int> interval = const Value.absent(),
-            Value<String?> daysOfWeek = const Value.absent(),
+            Value<int?> interval = const Value.absent(),
+            Value<int?> daysOfWeek = const Value.absent(),
             Value<int?> dayOfMonth = const Value.absent(),
-            Value<String?> monthPattern = const Value.absent(),
+            Value<int?> monthPattern = const Value.absent(),
             Value<int?> endCount = const Value.absent(),
             Value<String?> exceptionDates = const Value.absent(),
             Value<String?> rescheduledDates = const Value.absent(),
-            required DateTime createdAt,
-            required DateTime updatedAt,
-            Value<int> rowid = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
           }) =>
               SchedulesCompanion.insert(
             id: id,
@@ -1860,7 +1612,6 @@ class $$SchedulesTableTableManager extends RootTableManager<
             rescheduledDates: rescheduledDates,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -1883,27 +1634,15 @@ typedef $$SchedulesTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$HistoryLogsTableCreateCompanionBuilder = HistoryLogsCompanion
     Function({
-  required String id,
-  required String scheduleId,
-  required DateTime scheduledTime,
-  Value<DateTime?> triggeredAt,
-  required AlarmStatus status,
-  Value<int> snoozeCount,
-  required DismissType dismissType,
-  Value<String?> notes,
-  Value<int> rowid,
+  Value<int> id,
+  required String action,
+  Value<DateTime> timestamp,
 });
 typedef $$HistoryLogsTableUpdateCompanionBuilder = HistoryLogsCompanion
     Function({
-  Value<String> id,
-  Value<String> scheduleId,
-  Value<DateTime> scheduledTime,
-  Value<DateTime?> triggeredAt,
-  Value<AlarmStatus> status,
-  Value<int> snoozeCount,
-  Value<DismissType> dismissType,
-  Value<String?> notes,
-  Value<int> rowid,
+  Value<int> id,
+  Value<String> action,
+  Value<DateTime> timestamp,
 });
 
 class $$HistoryLogsTableFilterComposer
@@ -1915,33 +1654,14 @@ class $$HistoryLogsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<String> get id => $composableBuilder(
+  ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get scheduleId => $composableBuilder(
-      column: $table.scheduleId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get action => $composableBuilder(
+      column: $table.action, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<DateTime> get scheduledTime => $composableBuilder(
-      column: $table.scheduledTime, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get triggeredAt => $composableBuilder(
-      column: $table.triggeredAt, builder: (column) => ColumnFilters(column));
-
-  ColumnWithTypeConverterFilters<AlarmStatus, AlarmStatus, int> get status =>
-      $composableBuilder(
-          column: $table.status,
-          builder: (column) => ColumnWithTypeConverterFilters(column));
-
-  ColumnFilters<int> get snoozeCount => $composableBuilder(
-      column: $table.snoozeCount, builder: (column) => ColumnFilters(column));
-
-  ColumnWithTypeConverterFilters<DismissType, DismissType, int>
-      get dismissType => $composableBuilder(
-          column: $table.dismissType,
-          builder: (column) => ColumnWithTypeConverterFilters(column));
-
-  ColumnFilters<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnFilters(column));
+  ColumnFilters<DateTime> get timestamp => $composableBuilder(
+      column: $table.timestamp, builder: (column) => ColumnFilters(column));
 }
 
 class $$HistoryLogsTableOrderingComposer
@@ -1953,30 +1673,14 @@ class $$HistoryLogsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<String> get id => $composableBuilder(
+  ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get scheduleId => $composableBuilder(
-      column: $table.scheduleId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get action => $composableBuilder(
+      column: $table.action, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get scheduledTime => $composableBuilder(
-      column: $table.scheduledTime,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get triggeredAt => $composableBuilder(
-      column: $table.triggeredAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get snoozeCount => $composableBuilder(
-      column: $table.snoozeCount, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get dismissType => $composableBuilder(
-      column: $table.dismissType, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get notes => $composableBuilder(
-      column: $table.notes, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
+      column: $table.timestamp, builder: (column) => ColumnOrderings(column));
 }
 
 class $$HistoryLogsTableAnnotationComposer
@@ -1988,30 +1692,14 @@ class $$HistoryLogsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<String> get id =>
+  GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get scheduleId => $composableBuilder(
-      column: $table.scheduleId, builder: (column) => column);
+  GeneratedColumn<String> get action =>
+      $composableBuilder(column: $table.action, builder: (column) => column);
 
-  GeneratedColumn<DateTime> get scheduledTime => $composableBuilder(
-      column: $table.scheduledTime, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get triggeredAt => $composableBuilder(
-      column: $table.triggeredAt, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<AlarmStatus, int> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<int> get snoozeCount => $composableBuilder(
-      column: $table.snoozeCount, builder: (column) => column);
-
-  GeneratedColumnWithTypeConverter<DismissType, int> get dismissType =>
-      $composableBuilder(
-          column: $table.dismissType, builder: (column) => column);
-
-  GeneratedColumn<String> get notes =>
-      $composableBuilder(column: $table.notes, builder: (column) => column);
+  GeneratedColumn<DateTime> get timestamp =>
+      $composableBuilder(column: $table.timestamp, builder: (column) => column);
 }
 
 class $$HistoryLogsTableTableManager extends RootTableManager<
@@ -2037,48 +1725,24 @@ class $$HistoryLogsTableTableManager extends RootTableManager<
           createComputedFieldComposer: () =>
               $$HistoryLogsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> scheduleId = const Value.absent(),
-            Value<DateTime> scheduledTime = const Value.absent(),
-            Value<DateTime?> triggeredAt = const Value.absent(),
-            Value<AlarmStatus> status = const Value.absent(),
-            Value<int> snoozeCount = const Value.absent(),
-            Value<DismissType> dismissType = const Value.absent(),
-            Value<String?> notes = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
+            Value<int> id = const Value.absent(),
+            Value<String> action = const Value.absent(),
+            Value<DateTime> timestamp = const Value.absent(),
           }) =>
               HistoryLogsCompanion(
             id: id,
-            scheduleId: scheduleId,
-            scheduledTime: scheduledTime,
-            triggeredAt: triggeredAt,
-            status: status,
-            snoozeCount: snoozeCount,
-            dismissType: dismissType,
-            notes: notes,
-            rowid: rowid,
+            action: action,
+            timestamp: timestamp,
           ),
           createCompanionCallback: ({
-            required String id,
-            required String scheduleId,
-            required DateTime scheduledTime,
-            Value<DateTime?> triggeredAt = const Value.absent(),
-            required AlarmStatus status,
-            Value<int> snoozeCount = const Value.absent(),
-            required DismissType dismissType,
-            Value<String?> notes = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
+            Value<int> id = const Value.absent(),
+            required String action,
+            Value<DateTime> timestamp = const Value.absent(),
           }) =>
               HistoryLogsCompanion.insert(
             id: id,
-            scheduleId: scheduleId,
-            scheduledTime: scheduledTime,
-            triggeredAt: triggeredAt,
-            status: status,
-            snoozeCount: snoozeCount,
-            dismissType: dismissType,
-            notes: notes,
-            rowid: rowid,
+            action: action,
+            timestamp: timestamp,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

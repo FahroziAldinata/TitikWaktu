@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:titik_waktu/features/onboarding/screens/permission_onboarding_screen.dart';
+import 'package:titik_waktu/features/permissions/screens/permission_management_screen.dart';
 import 'package:titik_waktu/features/schedule/screens/home_screen.dart';
 import 'package:titik_waktu/features/schedule/screens/add_schedule_screen.dart';
 import 'package:titik_waktu/features/schedule/screens/schedule_detail_screen.dart';
@@ -8,6 +9,14 @@ import 'package:titik_waktu/features/alarm/screens/alarm_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/permissions/onboarding',
+      builder: (context, state) => const PermissionOnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/permissions',
+      builder: (context, state) => const PermissionManagementScreen(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => const HomeScreen(),
@@ -19,7 +28,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/edit/:id',
       builder: (context, state) => AddScheduleScreen(
-        scheduleId: state.pathParameters['id'],
+        scheduleId: state.pathParameters['id']!,
       ),
     ),
     GoRoute(

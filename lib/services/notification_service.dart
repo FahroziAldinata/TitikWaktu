@@ -28,7 +28,7 @@ class NotificationService {
         const AndroidNotificationChannel(
           'schedule_channel',
           'Jadwal Kegiatan',
-          channelDescription: 'Notifikasi untuk jadwal kegiatan',
+          description: 'Notifikasi untuk jadwal kegiatan',
           importance: Importance.high,
           enableVibration: true,
         ),
@@ -38,7 +38,7 @@ class NotificationService {
         const AndroidNotificationChannel(
           'alarm_channel',
           'Alarm Kegiatan',
-          channelDescription: 'Channel untuk alarm kegiatan penuh',
+          description: 'Channel untuk alarm kegiatan penuh',
           importance: Importance.max,
           enableVibration: true,
           playSound: true,

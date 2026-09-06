@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+@DataClassName('Schedule')
 class Schedules extends Table {
   TextColumn get id => text()();
   TextColumn get title => text().withLength(min: 1, max: 100)();

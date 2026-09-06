@@ -6,7 +6,7 @@ class MigrationV1 extends Migration {
 
   @override
   Future<void> up(Migrator m, GeneratedDatabase db) async {
-    await db.customStatement('''
+    await m.issueCustomQuery('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -18,8 +18,8 @@ class MigrationV1 extends Migration {
   }
 
   @override
-  Future<void> down(GeneratedDatabase db) async {
-    await db.customStatement('DROP TABLE IF EXISTS users');
+  Future<void> down(Migrator m, GeneratedDatabase db) async {
+    await m.issueCustomQuery('DROP TABLE IF EXISTS users');
     print('Migration v1 down executed.');
   }
 }

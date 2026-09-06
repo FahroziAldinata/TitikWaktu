@@ -5,5 +5,5 @@ abstract class Migration {
   Migration(this.version);
 
   Future<void> up(Migrator m, GeneratedDatabase db);
-  Future<void> down(GeneratedDatabase db);
+  Future<void> down(Migrator m, GeneratedDatabase db);
 }

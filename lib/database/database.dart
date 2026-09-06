@@ -12,9 +12,25 @@ part 'database.g.dart';
 class Schedules extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
+  TextColumn get description => text().nullable()();
   DateTimeColumn get time => dateTime()();
+  DateTimeColumn get startDate => dateTime().nullable()();
+  DateTimeColumn get endDate => dateTime().nullable()();
   IntColumn get notificationType => integer().nullable().withDefault(const Constant(0))();
+  TextColumn get soundPath => text().nullable()();
+  IntColumn get color => integer().nullable().withDefault(const Constant(0xFFFFFFFF))();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
   IntColumn get recurrenceType => integer().nullable().withDefault(const Constant(0))();
+  TextColumn get recurrenceRule => text().nullable()();
+  IntColumn get interval => integer().nullable()();
+  IntColumn get daysOfWeek => integer().nullable()();
+  IntColumn get dayOfMonth => integer().nullable()();
+  IntColumn get monthPattern => integer().nullable()();
+  IntColumn get endCount => integer().nullable()();
+  TextColumn get exceptionDates => text().nullable()();
+  TextColumn get rescheduledDates => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 @DataClassName('HistoryLog')

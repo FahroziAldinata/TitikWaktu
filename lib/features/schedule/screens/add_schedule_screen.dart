@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
-import 'package:titik_waktu/models/schedule.dart';
+import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
+import 'package:titik_waktu/models/schedule_enums.dart';
 
 class AddScheduleScreen extends ConsumerStatefulWidget {
   final String? scheduleId;
@@ -41,10 +42,10 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         _titleController.text = schedule.title;
         _descriptionController.text = schedule.description ?? '';
         _selectedTime = TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute);
-        _selectedDate = schedule.startDate;
-        _notificationType = schedule.notificationType;
-        _recurrenceType = schedule.recurrenceType;
-        _isActive = schedule.isActive;
+        _selectedDate = schedule.startDate ?? DateTime.now();
+        _notificationType = NotificationType.fromValue(schedule.notificationType);
+        _recurrenceType = RecurrenceType.fromValue(schedule.recurrenceType);
+        _isActive = schedule.isActive ?? true;
       });
     }
   }
@@ -118,7 +119,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<NotificationType>(
-              value: _notificationType,
+              initialValue: _notificationType,
               decoration: const InputDecoration(
                 labelText: 'Tipe Notifikasi',
               ),
@@ -140,7 +141,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<RecurrenceType>(
-              value: _recurrenceType,
+              initialValue: _recurrenceType,
               decoration: const InputDecoration(
                 labelText: 'Pengulangan',
               ),
@@ -222,13 +223,14 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   Future<void> _saveSchedule() async {
     if (_formKey.currentState!.validate()) {
       final schedule = Schedule(
-        id: widget.scheduleId ?? const Uuid().v4(),
+        id: int.parse(widget.scheduleId ?? '0'), // Use 0 as default for new schedules
         title: _titleController.text,
         description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
         time: DateTime(0, 0, 0, _selectedTime.hour, _selectedTime.minute),
         startDate: _selectedDate,
-        notificationType: _notificationType,
-        recurrenceType: _recurrenceType,
+        notificationType: _notificationType.value,
+        recurrenceType: _recurrenceType.value,
+        interval: 1,
         isActive: _isActive,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),

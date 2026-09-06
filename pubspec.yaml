@@ -21,6 +21,7 @@ dependencies:
   # Alarm & Notifications
   android_alarm_manager_plus: ^3.0.4
   flutter_local_notifications: ^17.2.1
+  timezone: ^0.9.4
   
   # Recurrence Rules
   rrule: ^0.2.12
