@@ -10,6 +10,9 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
+import io.flutter.embedding.engine.FlutterEngineCache
+import com.titikwaktu.alarm.services.AlarmService
+
 class MainActivity : FlutterActivity() {
 
     companion object {
@@ -19,10 +22,18 @@ class MainActivity : FlutterActivity() {
         private const val EXACT_ALARM_CHANNEL = "com.titikwaktu.alarm/exact_alarm"
         private const val METHOD_CAN_SCHEDULE_EXACT_ALARMS = "canScheduleExactAlarms"
         private const val METHOD_REQUEST_EXACT_ALARM_PERMISSION = "requestExactAlarmPermission"
+
+        private const val NATIVE_ALARM_CHANNEL = "com.titikwaktu.alarm/native_alarm"
+        private const val METHOD_SCHEDULE_ALARM = "scheduleAlarm"
+        private const val METHOD_CANCEL_ALARM = "cancelAlarm"
+        private const val METHOD_RESCHEDULE_ALL = "rescheduleAllAlarms"
     }
+
+    private val alarmService by lazy { AlarmService(this) }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        FlutterEngineCache.getInstance().put("main_engine", flutterEngine)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -54,6 +65,42 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            NATIVE_ALARM_CHANNEL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                METHOD_SCHEDULE_ALARM -> {
+                    val scheduleId = call.argument<String>("scheduleId") ?: ""
+                    val triggerTimeMillis = (call.argument<Number>("triggerTimeMillis"))?.toLong() ?: 0L
+                    val title = call.argument<String>("title") ?: "Alarm"
+                    val description = call.argument<String>("description") ?: ""
+                    
+                    if (scheduleId.isNotEmpty() && triggerTimeMillis > 0L) {
+                        alarmService.scheduleAlarm(scheduleId, triggerTimeMillis, title, description)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGS", "Missing scheduleId or triggerTimeMillis", null)
+                    }
+                }
+                METHOD_CANCEL_ALARM -> {
+                    val scheduleId = call.argument<String>("scheduleId") ?: ""
+                    if (scheduleId.isNotEmpty()) {
+                        alarmService.cancelAlarm(scheduleId)
+                        result.success(true)
+                    } else {
+                        result.error("INVALID_ARGS", "Missing scheduleId", null)
+                    }
+                }
+                METHOD_RESCHEDULE_ALL -> {
+                    val schedules = call.argument<List<Map<String, Any>>>("schedules") ?: emptyList()
+                    alarmService.rescheduleAllAlarms(schedules)
+                    result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun canScheduleExactAlarms(): Boolean {
@@ -69,7 +116,9 @@ class MainActivity : FlutterActivity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            val fallbackIntent = Intent(Settings.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE)
+            val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$packageName")
+            }
             startActivity(fallbackIntent)
         }
     }

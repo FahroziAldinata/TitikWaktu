@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -119,6 +121,14 @@ class AlarmForegroundService : Service() {
             val resourceId = resources.getIdentifier("default_alarm", "raw", packageName)
             if (resourceId != 0) {
                 mediaPlayer = MediaPlayer.create(this, resourceId).apply {
+                    setAudioAttributes(audioAttributes)
+                    isLooping = true
+                    start()
+                }
+            } else {
+                val alarmUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                mediaPlayer = MediaPlayer.create(this, alarmUri).apply {
                     setAudioAttributes(audioAttributes)
                     isLooping = true
                     start()

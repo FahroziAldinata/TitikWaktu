@@ -48,7 +48,7 @@ class ScheduleRepository {
       final schedule = await _dao.getScheduleById(int.parse(id));
       if (schedule == null) return false;
       
-      final result = await _dao.deleteSchedule(SchedulesCompanion(id: Value(schedule.id)));
+      final result = await _dao.deleteSchedule(schedule);
       _logger.i('Schedule deleted successfully: $id');
       return result > 0;
     } catch (e, stackTrace) {
@@ -61,7 +61,7 @@ class ScheduleRepository {
   Future<Schedule?> getScheduleById(String id) async {
     try {
       _logger.d('Getting schedule by ID: $id');
-      final schedule = await _dao.getScheduleById(id);
+      final schedule = await _dao.getScheduleById(int.parse(id));
       _logger.d('Schedule found: ${schedule?.id ?? "null"}');
       return schedule;
     } catch (e, stackTrace) {
@@ -285,8 +285,11 @@ class ScheduleRepository {
       final insertedSchedules = await executeTransaction((dao) async {
         final results = <Schedule>[];
         for (final schedule in schedules) {
-          final result = await dao.insertSchedule(schedule);
-          results.add(result);
+          final scheduleId = await dao.insertSchedule(schedule);
+          final insertedSchedule = await dao.getScheduleById(scheduleId);
+          if (insertedSchedule != null) {
+            results.add(insertedSchedule);
+          }
         }
         return results;
       });
@@ -308,7 +311,7 @@ class ScheduleRepository {
           final id = int.parse(idStr);
           final schedule = await dao.getScheduleById(id);
           if (schedule != null) {
-            count += await dao.deleteSchedule(SchedulesCompanion(id: Value(schedule.id)));
+            count += await dao.deleteSchedule(schedule);
           }
         }
         return count;

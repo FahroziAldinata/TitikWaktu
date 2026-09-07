@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
 import 'package:titik_waktu/services/permission_service.dart';
@@ -13,12 +13,41 @@ class AlarmService {
   factory AlarmService() => _instance;
   AlarmService._internal();
 
+  static const MethodChannel _nativeAlarmChannel =
+      MethodChannel('com.titikwaktu.alarm/native_alarm');
+
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
   final PermissionService _permissionService = PermissionService();
+  Future<List<Schedule>> Function()? _onRescheduleRequested;
+
+  /// Register callback to load schedules on reboot/reschedule request
+  void setRescheduleProvider(Future<List<Schedule>> Function() provider) {
+    _onRescheduleRequested = provider;
+  }
 
   Future<void> initialize() async {
-    await AndroidAlarmManager.initialize();
+    final initializationSettings = const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
+
+    await _notifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationResponse,
+    );
+
+    _nativeAlarmChannel.setMethodCallHandler(_handleNativeMethodCall);
+  }
+
+  Future<dynamic> _handleNativeMethodCall(MethodCall call) async {
+    if (call.method == 'rescheduleAllAlarms') {
+      if (_onRescheduleRequested != null) {
+        final schedules = await _onRescheduleRequested!();
+        await rescheduleAllAlarms(schedules);
+      }
+      return true;
+    }
+    return null;
   }
 
   Future<bool> scheduleAlarm(Schedule schedule) async {
@@ -38,63 +67,64 @@ class AlarmService {
     if (scheduledTime.isBefore(DateTime.now())) return false;
 
     if (schedule.notificationType == NotificationType.fullAlarm) {
-      await _scheduleFullAlarm(schedule, scheduledTime);
+      // Use native AlarmManager with looping ForegroundService and WakeLock
+      return await _scheduleNativeAlarm(schedule, scheduledTime);
     } else {
-      await _scheduleNotification(schedule, scheduledTime);
+      // Use standard local notification
+      final notificationDetails = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'schedule_channel',
+          'Jadwal Kegiatan',
+          channelDescription: 'Notifikasi untuk jadwal kegiatan',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          color: schedule.color != null
+              ? Color(schedule.color!)
+              : null,
+        ),
+      );
+
+      await _notifications.zonedSchedule(
+        schedule.id.hashCode,
+        schedule.title,
+        schedule.description ?? 'Waktunya kegiatan!',
+        tz.TZDateTime.from(scheduledTime.toUtc(), tz.UTC),
+        notificationDetails,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+
+      return true;
     }
-
-    return true;
   }
 
-  Future<void> _scheduleFullAlarm(
+  Future<bool> _scheduleNativeAlarm(
       Schedule schedule, DateTime scheduledTime) async {
-    await AndroidAlarmManager.oneShotAt(
-      scheduledTime,
-      schedule.id.hashCode,
-      _fullAlarmCallback,
-      exact: true,
-      wakeup: true,
-      allowWhileIdle: true,
-      rescheduleOnReboot: true,
-      params: {
+    try {
+      await _nativeAlarmChannel.invokeMethod('scheduleAlarm', {
         'scheduleId': schedule.id,
+        'triggerTimeMillis': scheduledTime.millisecondsSinceEpoch,
         'title': schedule.title,
-        'description': schedule.description,
-      },
-    );
-  }
-
-  Future<void> _scheduleNotification(
-      Schedule schedule, DateTime scheduledTime) async {
-    final notificationDetails = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'schedule_channel',
-        'Jadwal Kegiatan',
-        channelDescription: 'Notifikasi untuk jadwal kegiatan',
-        importance: Importance.high,
-        priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
-        color: schedule.color != null
-            ? Color(schedule.color!)
-            : null,
-      ),
-    );
-
-    await _notifications.zonedSchedule(
-      schedule.id.hashCode,
-      schedule.title,
-      schedule.description ?? 'Waktunya kegiatan!',
-      tz.TZDateTime.from(scheduledTime.toUtc(), tz.UTC),
-      notificationDetails,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-    );
+        'description': schedule.description ?? 'Waktunya kegiatan!',
+      });
+      return true;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to schedule native alarm: ${e.message}');
+      return false;
+    }
   }
 
   Future<void> cancelAlarm(String scheduleId) async {
-    await AndroidAlarmManager.cancel(scheduleId.hashCode);
     await _notifications.cancel(scheduleId.hashCode);
+    try {
+      await _nativeAlarmChannel.invokeMethod('cancelAlarm', {
+        'scheduleId': scheduleId,
+      });
+    } on PlatformException catch (e) {
+      debugPrint('Failed to cancel native alarm: ${e.message}');
+    }
   }
 
   Future<void> rescheduleAllAlarms(List<Schedule> schedules) async {
@@ -112,6 +142,7 @@ class AlarmService {
           await _permissionService.isNotificationPermissionGranted();
       if (!hasNotificationPermission) return false;
 
+      // Check for exact alarm permission if needed
       if (schedule.notificationType == NotificationType.fullAlarm) {
         final hasExactAlarm = await _permissionService.canScheduleExactAlarms();
         if (!hasExactAlarm) return false;
@@ -131,8 +162,8 @@ class AlarmService {
     return !hasNotification || !hasExactAlarm;
   }
 
-  static void _fullAlarmCallback(int id, Map<String, dynamic> params) {
-    // This runs in a separate isolate.
-    // Trigger foreground service for full alarm.
+  void _onNotificationResponse(NotificationResponse response) {
+    // Handle notification tap
+    print('Notification tapped: ${response.id}');
   }
 }

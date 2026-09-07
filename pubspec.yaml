@@ -15,11 +15,10 @@ dependencies:
   riverpod_annotation: ^2.3.3
   
   # Local Database
-  drift: ^2.14.1
+  drift: ^2.28.2
   sqlite3_flutter_libs: ^0.5.18
   
   # Alarm & Notifications
-  android_alarm_manager_plus: ^3.0.4
   flutter_local_notifications: ^17.2.1
   timezone: ^0.9.4
   
@@ -45,7 +44,7 @@ dev_dependencies:
   
   # Code Generation
   build_runner: ^2.4.7
-  drift_dev: ^2.14.1
+  drift_dev: ^2.28.0
   riverpod_generator: ^2.3.9
   json_serializable: ^6.7.1
   
@@ -61,12 +60,6 @@ flutter:
     - assets/images/
   
   fonts:
-    - family: Inter
+    - family: Roboto
       fonts:
-        - asset: assets/fonts/Inter-Regular.ttf
-        - asset: assets/fonts/Inter-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Inter-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Inter-Bold.ttf
-          weight: 700
+        - asset: fonts/Roboto-Regular.ttf

@@ -10,7 +10,10 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
 
   Future<List<Schedule>> getAllSchedules() => select(schedules).get();
   Future<int> insertSchedule(Insertable<Schedule> schedule) => into(schedules).insert(schedule);
-  Future<bool> updateSchedule(Insertable<Schedule> schedule) => update(schedules).replace(schedule);
+  Future<int> updateSchedule(Insertable<Schedule> schedule) async {
+    final updateResult = await update(schedules).replace(schedule);
+    return updateResult == true ? 1 : 0;
+  }
   Future<int> deleteSchedule(Insertable<Schedule> schedule) => delete(schedules).delete(schedule);
 
   /// Get schedule by ID
@@ -123,8 +126,8 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
     
     final statement = select(schedules)
       ..where((tbl) => tbl.time.isBetween(
-        Expression.literal(startOfDay),
-        Expression.literal(endOfDay),
+        Variable.withDateTime(startOfDay),
+        Variable.withDateTime(endOfDay),
       ));
     return statement.get();
   }
@@ -133,8 +136,8 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   Future<List<Schedule>> getSchedulesByDateRange(DateTime startDate, DateTime endDate) async {
     final statement = select(schedules)
       ..where((tbl) => tbl.time.isBetween(
-        Expression.literal(startDate),
-        Expression.literal(endDate),
+        Variable.withDateTime(startDate),
+        Variable.withDateTime(endDate),
       ));
     return statement.get();
   }
@@ -168,8 +171,8 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
     
     final statement = select(schedules)
       ..where((tbl) => tbl.time.isBetween(
-        Expression.literal(startOfWeek),
-        Expression.literal(endOfWeek),
+        Variable.withDateTime(startOfWeek),
+        Variable.withDateTime(endOfWeek),
       ));
     return statement.get();
   }
@@ -182,8 +185,8 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
     
     final statement = select(schedules)
       ..where((tbl) => tbl.time.isBetween(
-        Expression.literal(startOfMonth),
-        Expression.literal(endOfMonth),
+        Variable.withDateTime(startOfMonth),
+        Variable.withDateTime(endOfMonth),
       ));
     return statement.get();
   }

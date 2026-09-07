@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
@@ -45,7 +44,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         _selectedDate = schedule.startDate ?? DateTime.now();
         _notificationType = NotificationType.fromValue(schedule.notificationType);
         _recurrenceType = RecurrenceType.fromValue(schedule.recurrenceType);
-        _isActive = schedule.isActive ?? true;
+        _isActive = schedule.isActive;
       });
     }
   }

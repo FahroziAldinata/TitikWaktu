@@ -7,12 +7,10 @@ class MigrationV2 extends Migration {
   @override
   Future<void> up(Migrator m, GeneratedDatabase db) async {
     // Add is_active column to users table
-    await m.issueCustomQuery('''
-      ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1;
-    ''');
+    await db.customStatement('ALTER TABLE users ADD COLUMN is_active INTEGER DEFAULT 1');
     
-    // Create another table for demonstration
-    await m.issueCustomQuery('''
+    // Create settings table
+    await db.customStatement('''
       CREATE TABLE settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -24,7 +22,7 @@ class MigrationV2 extends Migration {
   @override
   Future<void> down(Migrator m, GeneratedDatabase db) async {
     // Drop the settings table
-    await m.issueCustomQuery('DROP TABLE IF EXISTS settings');
+    await db.customStatement('DROP TABLE IF EXISTS settings');
     
     // SQLite doesn't natively support dropping columns easily, 
     // but a proper rollback could involve creating a temp table.
