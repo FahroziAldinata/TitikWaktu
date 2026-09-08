@@ -30,9 +30,10 @@ class ScheduleRepository {
   /// Update an existing schedule
   Future<Schedule> updateSchedule(SchedulesCompanion schedule) async {
     try {
-      _logger.i('Updating schedule: ${schedule.id.value}');
-      final updatedId = await _dao.updateSchedule(schedule);
-      final updatedSchedule = await _dao.getScheduleById(updatedId);
+      final scheduleId = schedule.id.value;
+      _logger.i('Updating schedule: $scheduleId');
+      await _dao.updateSchedule(schedule);
+      final updatedSchedule = await _dao.getScheduleById(scheduleId);
       _logger.i('Schedule updated successfully: ${updatedSchedule?.id}');
       return updatedSchedule!;
     } catch (e, stackTrace) {
@@ -42,14 +43,16 @@ class ScheduleRepository {
   }
 
   /// Delete a schedule by ID
-  Future<bool> deleteSchedule(String id) async {
+  Future<bool> deleteSchedule(dynamic id) async {
     try {
-      _logger.i('Deleting schedule: $id');
-      final schedule = await _dao.getScheduleById(int.parse(id));
+      final parsedId = id is int ? id : int.tryParse(id.toString());
+      if (parsedId == null) return false;
+      _logger.i('Deleting schedule: $parsedId');
+      final schedule = await _dao.getScheduleById(parsedId);
       if (schedule == null) return false;
       
       final result = await _dao.deleteSchedule(schedule);
-      _logger.i('Schedule deleted successfully: $id');
+      _logger.i('Schedule deleted successfully: $parsedId');
       return result > 0;
     } catch (e, stackTrace) {
       _logger.e('Failed to delete schedule', error: e, stackTrace: stackTrace);
@@ -58,10 +61,12 @@ class ScheduleRepository {
   }
 
   /// Get a schedule by ID
-  Future<Schedule?> getScheduleById(String id) async {
+  Future<Schedule?> getScheduleById(dynamic id) async {
     try {
-      _logger.d('Getting schedule by ID: $id');
-      final schedule = await _dao.getScheduleById(int.parse(id));
+      final parsedId = id is int ? id : int.tryParse(id.toString());
+      if (parsedId == null) return null;
+      _logger.d('Getting schedule by ID: $parsedId');
+      final schedule = await _dao.getScheduleById(parsedId);
       _logger.d('Schedule found: ${schedule?.id ?? "null"}');
       return schedule;
     } catch (e, stackTrace) {

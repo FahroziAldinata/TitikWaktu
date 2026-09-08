@@ -72,7 +72,7 @@ class MainActivity : FlutterActivity() {
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 METHOD_SCHEDULE_ALARM -> {
-                    val scheduleId = call.argument<String>("scheduleId") ?: ""
+                    val scheduleId = call.argument<Any>("scheduleId")?.toString() ?: ""
                     val triggerTimeMillis = (call.argument<Number>("triggerTimeMillis"))?.toLong() ?: 0L
                     val title = call.argument<String>("title") ?: "Alarm"
                     val description = call.argument<String>("description") ?: ""
@@ -85,7 +85,7 @@ class MainActivity : FlutterActivity() {
                     }
                 }
                 METHOD_CANCEL_ALARM -> {
-                    val scheduleId = call.argument<String>("scheduleId") ?: ""
+                    val scheduleId = call.argument<Any>("scheduleId")?.toString() ?: ""
                     if (scheduleId.isNotEmpty()) {
                         alarmService.cancelAlarm(scheduleId)
                         result.success(true)

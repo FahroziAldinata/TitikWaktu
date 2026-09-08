@@ -104,7 +104,7 @@ class AlarmService {
       Schedule schedule, DateTime scheduledTime) async {
     try {
       await _nativeAlarmChannel.invokeMethod('scheduleAlarm', {
-        'scheduleId': schedule.id,
+        'scheduleId': schedule.id.toString(),
         'triggerTimeMillis': scheduledTime.millisecondsSinceEpoch,
         'title': schedule.title,
         'description': schedule.description ?? 'Waktunya kegiatan!',

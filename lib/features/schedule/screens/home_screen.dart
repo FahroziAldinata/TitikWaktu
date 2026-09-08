@@ -74,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                   trailing: Switch(
                     value: schedule.isActive,
                     onChanged: (value) {
-                      ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id.toString());
+                      ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id);
                     },
                   ),
                   onTap: () {

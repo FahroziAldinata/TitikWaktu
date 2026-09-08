@@ -34,18 +34,25 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   }
   
   Future<void> _loadSchedule() async {
-    final storage = ref.read(storageServiceProvider);
-    final schedule = await storage.getScheduleById(widget.scheduleId!);
-    if (schedule != null && mounted) {
-      setState(() {
-        _titleController.text = schedule.title;
-        _descriptionController.text = schedule.description ?? '';
-        _selectedTime = TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute);
-        _selectedDate = schedule.startDate ?? DateTime.now();
-        _notificationType = NotificationType.fromValue(schedule.notificationType);
-        _recurrenceType = RecurrenceType.fromValue(schedule.recurrenceType);
-        _isActive = schedule.isActive;
-      });
+    final scheduleIdInt = int.tryParse(widget.scheduleId ?? '');
+    if (scheduleIdInt == null) return;
+
+    try {
+      final repo = ref.read(scheduleRepositoryProvider);
+      final schedule = await repo.getScheduleById(scheduleIdInt);
+      if (schedule != null && mounted) {
+        setState(() {
+          _titleController.text = schedule.title;
+          _descriptionController.text = schedule.description ?? '';
+          _selectedTime = TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute);
+          _selectedDate = schedule.startDate ?? DateTime.now();
+          _notificationType = NotificationType.fromValue(schedule.notificationType);
+          _recurrenceType = RecurrenceType.fromValue(schedule.recurrenceType);
+          _isActive = schedule.isActive;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading schedule for edit: $e');
     }
   }
   
@@ -221,8 +228,9 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   
   Future<void> _saveSchedule() async {
     if (_formKey.currentState!.validate()) {
+      final scheduleIdInt = int.tryParse(widget.scheduleId ?? '') ?? 0;
       final schedule = Schedule(
-        id: int.parse(widget.scheduleId ?? '0'), // Use 0 as default for new schedules
+        id: scheduleIdInt,
         title: _titleController.text,
         description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
         time: DateTime(0, 0, 0, _selectedTime.hour, _selectedTime.minute),
@@ -235,7 +243,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         updatedAt: DateTime.now(),
       );
       
-      if (widget.scheduleId != null) {
+      if (widget.scheduleId != null && scheduleIdInt != 0) {
         await ref.read(scheduleListProvider.notifier).updateSchedule(schedule);
       } else {
         await ref.read(scheduleListProvider.notifier).addSchedule(schedule);
@@ -248,6 +256,9 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   }
   
   Future<void> _deleteSchedule() async {
+    final scheduleIdInt = int.tryParse(widget.scheduleId ?? '');
+    if (scheduleIdInt == null) return;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -267,7 +278,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
     );
     
     if (confirmed == true && mounted) {
-      await ref.read(scheduleListProvider.notifier).deleteSchedule(widget.scheduleId!);
+      await ref.read(scheduleListProvider.notifier).deleteSchedule(scheduleIdInt);
       if (mounted) {
         context.pop();
       }

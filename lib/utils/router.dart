@@ -28,19 +28,19 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/edit/:id',
       builder: (context, state) => AddScheduleScreen(
-        scheduleId: state.pathParameters['id']!,
+        scheduleId: state.pathParameters['id'] ?? '',
       ),
     ),
     GoRoute(
       path: '/schedule/:id',
       builder: (context, state) => ScheduleDetailScreen(
-        scheduleId: state.pathParameters['id']!,
+        scheduleId: state.pathParameters['id'] ?? '',
       ),
     ),
     GoRoute(
       path: '/alarm/:id',
       builder: (context, state) => AlarmScreen(
-        scheduleId: state.pathParameters['id']!,
+        scheduleId: state.pathParameters['id'] ?? '',
       ),
     ),
   ],
