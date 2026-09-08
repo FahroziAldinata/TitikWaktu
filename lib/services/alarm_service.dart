@@ -37,15 +37,33 @@ class AlarmService {
     );
 
     _nativeAlarmChannel.setMethodCallHandler(_handleNativeMethodCall);
+
+    // Automatically reschedule all active alarms from DB on startup/boot
+    try {
+      final db = AppDatabase();
+      final schedules = await db.schedulesDao.getAllSchedules();
+      await rescheduleAllAlarms(schedules);
+    } catch (e) {
+      debugPrint('Auto-reschedule on init error: $e');
+    }
   }
 
   Future<dynamic> _handleNativeMethodCall(MethodCall call) async {
     if (call.method == 'rescheduleAllAlarms') {
-      if (_onRescheduleRequested != null) {
-        final schedules = await _onRescheduleRequested!();
+      try {
+        List<Schedule> schedules;
+        if (_onRescheduleRequested != null) {
+          schedules = await _onRescheduleRequested!();
+        } else {
+          final db = AppDatabase();
+          schedules = await db.schedulesDao.getAllSchedules();
+        }
         await rescheduleAllAlarms(schedules);
+        return true;
+      } catch (e) {
+        debugPrint('Error handling rescheduleAllAlarms: $e');
+        return false;
       }
-      return true;
     }
     return null;
   }
@@ -56,17 +74,33 @@ class AlarmService {
     final hasPermissions = await _checkRequiredPermissions(schedule);
     if (!hasPermissions) return false;
 
-    final scheduledTime = DateTime(
-      schedule.startDate!.year,
-      schedule.startDate!.month,
-      schedule.startDate!.day,
+    final now = DateTime.now();
+    DateTime scheduledTime = DateTime(
+      schedule.startDate?.year ?? now.year,
+      schedule.startDate?.month ?? now.month,
+      schedule.startDate?.day ?? now.day,
       schedule.time.hour,
       schedule.time.minute,
     );
 
-    if (scheduledTime.isBefore(DateTime.now())) return false;
+    if (scheduledTime.isBefore(now)) {
+      final todayTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        schedule.time.hour,
+        schedule.time.minute,
+      );
+      if (todayTime.isAfter(now)) {
+        scheduledTime = todayTime;
+      } else {
+        scheduledTime = todayTime.add(const Duration(days: 1));
+      }
+    }
 
-    if (schedule.notificationType == NotificationType.fullAlarm) {
+    final isFullAlarm = schedule.notificationType == NotificationType.fullAlarm.value;
+
+    if (isFullAlarm) {
       // Use native AlarmManager with looping ForegroundService and WakeLock
       return await _scheduleNativeAlarm(schedule, scheduledTime);
     } else {

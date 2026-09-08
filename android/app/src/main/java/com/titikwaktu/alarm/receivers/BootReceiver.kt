@@ -11,8 +11,10 @@ import io.flutter.plugin.common.MethodChannel
 class BootReceiver : BroadcastReceiver() {
     
     override fun onReceive(context: Context, intent: Intent) {
+        android.util.Log.i("BootReceiver", "🚀 onReceive: action=${intent.action}")
         if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
             intent.action == "android.intent.action.QUICKBOOT_POWERON" ||
+            intent.action == "com.htc.intent.action.QUICKBOOT_POWERON" ||
             intent.action == "android.intent.action.MY_PACKAGE_REPLACED") {
             
             rescheduleAllAlarms(context)
@@ -20,6 +22,7 @@ class BootReceiver : BroadcastReceiver() {
     }
     
     private fun rescheduleAllAlarms(context: Context) {
+        android.util.Log.i("BootReceiver", "🔄 rescheduleAllAlarms called")
         try {
             val engine = FlutterEngineCache.getInstance().get("main_engine")
             

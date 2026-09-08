@@ -19,6 +19,8 @@ import com.titikwaktu.alarm.R
 import com.titikwaktu.alarm.receivers.DismissReceiver
 import com.titikwaktu.alarm.receivers.SnoozeReceiver
 
+import android.util.Log
+
 class AlarmForegroundService : Service() {
     
     private var mediaPlayer: MediaPlayer? = null
@@ -28,6 +30,7 @@ class AlarmForegroundService : Service() {
     
     override fun onCreate() {
         super.onCreate()
+        Log.i("AlarmForegroundService", "onCreate: creating notification channel and acquiring wakelock")
         createNotificationChannel()
         acquireWakeLock()
     }
@@ -37,7 +40,10 @@ class AlarmForegroundService : Service() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Alarm"
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: ""
         
+        Log.i("AlarmForegroundService", "🔔 onStartCommand: Alarm triggered: '$title' (ID: $scheduleId)")
+
         if (intent.getBooleanExtra(ACTION_DISMISS, false)) {
+            Log.i("AlarmForegroundService", "ACTION_DISMISS received: stopping alarm")
             stopAlarm()
             stopForeground(true)
             stopSelf()
@@ -53,6 +59,7 @@ class AlarmForegroundService : Service() {
     }
     
     override fun onDestroy() {
+        Log.i("AlarmForegroundService", "🛑 onDestroy: releasing wakelock and stopping alarm")
         stopAlarm()
         releaseWakeLock()
         super.onDestroy()
@@ -97,6 +104,20 @@ class AlarmForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
+        val fullScreenIntent = Intent(this, com.titikwaktu.alarm.MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("route", "/alarm/$scheduleId")
+            putExtra("schedule_id", scheduleId)
+            putExtra("title", title)
+            putExtra("description", description)
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            scheduleId.hashCode() + 2,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(description)
@@ -105,7 +126,7 @@ class AlarmForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(false)
             .setOngoing(true)
-            .setFullScreenIntent(null, true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
             .addAction(R.mipmap.ic_launcher, "Matikan", dismissPendingIntent)
             .addAction(R.mipmap.ic_launcher, "Tunda 5 Menit", snoozePendingIntent)
             .build()

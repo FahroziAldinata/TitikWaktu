@@ -4,14 +4,20 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.titikwaktu.alarm.services.AlarmForegroundService
 
 class AlarmReceiver : BroadcastReceiver() {
     
     override fun onReceive(context: Context, intent: Intent) {
-        val scheduleId = intent.getStringExtra(EXTRA_SCHEDULE_ID) ?: return
+        val scheduleId = intent.getStringExtra(EXTRA_SCHEDULE_ID) ?: run {
+            Log.w("AlarmReceiver", "onReceive called without scheduleId")
+            return
+        }
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Alarm"
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: ""
+        
+        Log.i("AlarmReceiver", "🔥 onReceive: Triggering Alarm for schedule #$scheduleId: '$title'")
         
         val serviceIntent = Intent(context, AlarmForegroundService::class.java).apply {
             putExtra(EXTRA_SCHEDULE_ID, scheduleId)

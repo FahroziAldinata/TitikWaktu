@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rrule/rrule.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
@@ -19,7 +20,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   
-  TimeOfDay _selectedTime = TimeOfDay.now();
+  late TimeOfDay _selectedTime;
   DateTime _selectedDate = DateTime.now();
   NotificationType _notificationType = NotificationType.notification;
   RecurrenceType _recurrenceType = RecurrenceType.once;
@@ -28,6 +29,8 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   @override
   void initState() {
     super.initState();
+    final defaultTime = DateTime.now().add(const Duration(minutes: 2));
+    _selectedTime = TimeOfDay(hour: defaultTime.hour, minute: defaultTime.minute);
     if (widget.scheduleId != null) {
       _loadSchedule();
     }
@@ -41,18 +44,40 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
       final repo = ref.read(scheduleRepositoryProvider);
       final schedule = await repo.getScheduleById(scheduleIdInt);
       if (schedule != null && mounted) {
+        RecurrenceType recType = RecurrenceType.once;
+        if (schedule.recurrenceRule != null && schedule.recurrenceRule!.isNotEmpty) {
+          try {
+            final rrule = RecurrenceRule.fromString(schedule.recurrenceRule!);
+            switch (rrule.frequency) {
+              case Frequency.daily:
+                recType = RecurrenceType.daily;
+                break;
+              case Frequency.weekly:
+                recType = RecurrenceType.weekly;
+                break;
+              case Frequency.monthly:
+                recType = RecurrenceType.monthly;
+                break;
+              default:
+                recType = RecurrenceType.once;
+            }
+          } catch (_) {
+            recType = RecurrenceType.once;
+          }
+        }
+        
         setState(() {
           _titleController.text = schedule.title;
           _descriptionController.text = schedule.description ?? '';
-          _selectedTime = TimeOfDay(hour: schedule.time.hour, minute: schedule.time.minute);
+          _selectedTime = TimeOfDay.fromDateTime(schedule.time);
           _selectedDate = schedule.startDate ?? DateTime.now();
           _notificationType = NotificationType.fromValue(schedule.notificationType);
-          _recurrenceType = RecurrenceType.fromValue(schedule.recurrenceType);
+          _recurrenceType = recType;
           _isActive = schedule.isActive;
         });
       }
     } catch (e) {
-      debugPrint('Error loading schedule for edit: $e');
+      debugPrint('Error loading schedule: $e');
     }
   }
   
@@ -85,10 +110,10 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
               controller: _titleController,
               decoration: const InputDecoration(
                 labelText: 'Judul Kegiatan',
-                hintText: 'Contoh: Olahraga Pagi',
+                hintText: 'Contoh: Minum Obat',
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
+                if (value == null || value.trim().isEmpty) {
                   return 'Judul tidak boleh kosong';
                 }
                 return null;
@@ -111,7 +136,28 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                 '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
                 style: Theme.of(context).textTheme.headlineMedium,
               ),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    tooltip: '-1 Menit',
+                    onPressed: () {
+                      final dt = DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute).subtract(const Duration(minutes: 1));
+                      setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    tooltip: '+1 Menit',
+                    onPressed: () {
+                      final dt = DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute).add(const Duration(minutes: 1));
+                      setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
+                    },
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
               onTap: _selectTime,
             ),
             ListTile(
@@ -185,9 +231,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
               title: const Text('Aktif'),
               subtitle: const Text('Jadwal akan mengirim notifikasi'),
               value: _isActive,
-              onChanged: (value) {
-                setState(() => _isActive = value);
-              },
+              onChanged: (value) => setState(() => _isActive = value),
             ),
           ],
         ),
@@ -208,6 +252,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
+      initialEntryMode: TimePickerEntryMode.dial,
     );
     if (picked != null) {
       setState(() => _selectedTime = picked);
@@ -229,6 +274,25 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   Future<void> _saveSchedule() async {
     if (_formKey.currentState!.validate()) {
       final scheduleIdInt = int.tryParse(widget.scheduleId ?? '') ?? 0;
+
+      String? rruleString;
+      switch (_recurrenceType) {
+        case RecurrenceType.daily:
+          rruleString = 'RRULE:FREQ=DAILY;INTERVAL=1';
+          break;
+        case RecurrenceType.weekly:
+          rruleString = 'RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,SA,SU';
+          break;
+        case RecurrenceType.monthly:
+          rruleString = 'RRULE:FREQ=MONTHLY;INTERVAL=1;BYMONTHDAY=${_selectedDate.day}';
+          break;
+        case RecurrenceType.once:
+        case RecurrenceType.none:
+        default:
+          rruleString = null;
+          break;
+      }
+
       final schedule = Schedule(
         id: scheduleIdInt,
         title: _titleController.text,
@@ -237,6 +301,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         startDate: _selectedDate,
         notificationType: _notificationType.value,
         recurrenceType: _recurrenceType.value,
+        recurrenceRule: rruleString,
         interval: 1,
         isActive: _isActive,
         createdAt: DateTime.now(),

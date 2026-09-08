@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.SystemClock
 import com.titikwaktu.alarm.receivers.AlarmReceiver
 
+import android.util.Log
+
 class AlarmService(private val context: Context) {
     
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -18,6 +20,8 @@ class AlarmService(private val context: Context) {
         title: String,
         description: String
     ) {
+        Log.i("NativeAlarmService", "⏰ scheduleAlarm called for schedule #$scheduleId at $triggerTimeMillis ('$title')")
+        
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra(AlarmReceiver.EXTRA_SCHEDULE_ID, scheduleId)
             putExtra(AlarmReceiver.EXTRA_TITLE, title)
@@ -31,18 +35,38 @@ class AlarmService(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTimeMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                triggerTimeMillis,
-                pendingIntent
-            )
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val clockInfo = AlarmManager.AlarmClockInfo(triggerTimeMillis, pendingIntent)
+                alarmManager.setAlarmClock(clockInfo, pendingIntent)
+                Log.i("NativeAlarmService", "✅ setAlarmClock succeeded for #$scheduleId at $triggerTimeMillis")
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMillis,
+                    pendingIntent
+                )
+                Log.i("NativeAlarmService", "✅ setExactAndAllowWhileIdle succeeded for #$scheduleId")
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMillis,
+                    pendingIntent
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("NativeAlarmService", "❌ Failed to setAlarmClock: ${e.message}", e)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTimeMillis,
+                        pendingIntent
+                    )
+                }
+            } catch (ex: Exception) {
+                Log.e("NativeAlarmService", "❌ Fallback setExactAndAllowWhileIdle failed: ${ex.message}", ex)
+            }
         }
     }
     

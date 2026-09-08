@@ -38,6 +38,11 @@ class AppTheme {
       space: 1,
       thickness: 1,
     ),
+    timePickerTheme: const TimePickerThemeData(
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      ),
+    ),
   );
   
   static final darkTheme = ThemeData(
@@ -72,6 +77,11 @@ class AppTheme {
     dividerTheme: const DividerThemeData(
       space: 1,
       thickness: 1,
+    ),
+    timePickerTheme: const TimePickerThemeData(
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      ),
     ),
   );
 }
