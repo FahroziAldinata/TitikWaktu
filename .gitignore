@@ -52,3 +52,6 @@ android/app/build/
 
 # OpenCode
 .opencode/
+
+# Test Evidence & Local Screenshots
+test_evidence/
