@@ -9,5 +9,9 @@ void main() {
         child: TitikWaktuApp(),
       ),
     );
+    // Advance time past splash animation into home screen
+    await tester.pump(const Duration(milliseconds: 1800));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(TitikWaktuApp), findsOneWidget);
   });
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:titik_waktu/providers/permission_provider.dart';
 import 'package:titik_waktu/utils/theme.dart';
 import 'package:titik_waktu/utils/router.dart';
@@ -23,7 +22,7 @@ class _TitikWaktuAppState extends ConsumerState<TitikWaktuApp> {
       _initialRouteChecked = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!permissionState.onboardingComplete) {
-          context.go('/permissions/onboarding');
+          appRouter.go('/permissions/onboarding');
         }
       });
     }

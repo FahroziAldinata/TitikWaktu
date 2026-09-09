@@ -78,6 +78,7 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
         endCount: Value(schedule.endCount),
         exceptionDates: Value(schedule.exceptionDates),
         rescheduledDates: Value(schedule.rescheduledDates),
+        categoryId: Value(schedule.categoryId),
       );
       
       final createdSchedule = await _repository.createSchedule(companion);
@@ -118,6 +119,7 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
         endCount: Value(schedule.endCount),
         exceptionDates: Value(schedule.exceptionDates),
         rescheduledDates: Value(schedule.rescheduledDates),
+        categoryId: Value(schedule.categoryId),
         updatedAt: Value(DateTime.now()),
       );
       

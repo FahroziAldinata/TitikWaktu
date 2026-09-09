@@ -4,9 +4,17 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import '../services/database_initializer.dart';
+import 'categories_dao.dart';
 import 'schedules_dao.dart';
 
 part 'database.g.dart';
+
+@DataClassName('Category')
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get colorHex => text()();
+}
 
 @DataClassName('Schedule')
 class Schedules extends Table {
@@ -29,6 +37,7 @@ class Schedules extends Table {
   IntColumn get endCount => integer().nullable()();
   TextColumn get exceptionDates => text().nullable()();
   TextColumn get rescheduledDates => text().nullable()();
+  IntColumn get categoryId => integer().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -40,7 +49,7 @@ class HistoryLogs extends Table {
   DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Schedules, HistoryLogs], daos: [SchedulesDao])
+@DriftDatabase(tables: [Schedules, HistoryLogs, Categories], daos: [SchedulesDao, CategoriesDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
