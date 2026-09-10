@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:titik_waktu/providers/history_provider.dart';
 
-class AlarmScreen extends StatefulWidget {
+class AlarmScreen extends ConsumerStatefulWidget {
   final String scheduleId;
   
   const AlarmScreen({super.key, required this.scheduleId});
 
   @override
-  State<AlarmScreen> createState() => _AlarmScreenState();
+  ConsumerState<AlarmScreen> createState() => _AlarmScreenState();
 }
 
-class _AlarmScreenState extends State<AlarmScreen> {
+class _AlarmScreenState extends ConsumerState<AlarmScreen> {
   @override
   void initState() {
     super.initState();
@@ -20,6 +22,13 @@ class _AlarmScreenState extends State<AlarmScreen> {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+
+    // Record alarm triggered event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(historyRepositoryProvider).addLog(
+        '${HistoryLogHelper.actionAlarmTriggered}: Schedule #${widget.scheduleId}',
+      );
+    });
   }
   
   @override
@@ -84,14 +93,18 @@ class _AlarmScreenState extends State<AlarmScreen> {
   }
   
   void _snoozeAlarm() {
-    // TODO: Implement snooze logic
+    ref.read(historyRepositoryProvider).addLog(
+      '${HistoryLogHelper.actionAlarmSnoozed}: Schedule #${widget.scheduleId} (5 menit)',
+    );
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Alarm ditunda 5 menit')),
     );
   }
   
   void _dismissAlarm() {
-    // TODO: Implement dismiss logic
+    ref.read(historyRepositoryProvider).addLog(
+      '${HistoryLogHelper.actionAlarmDismissed}: Schedule #${widget.scheduleId}',
+    );
     context.pop();
   }
 }

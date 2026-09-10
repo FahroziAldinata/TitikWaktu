@@ -31,6 +31,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   NotificationType _notificationType = NotificationType.notification;
   RecurrenceType _recurrenceType = RecurrenceType.once;
   int? _selectedCategoryId;
+  int? _selectedColor;
   bool _isActive = true;
 
   // Custom recurrence options
@@ -116,6 +117,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
           _notificationType = NotificationType.fromValue(schedule.notificationType);
           _recurrenceType = recType;
           _selectedCategoryId = schedule.categoryId;
+          _selectedColor = schedule.color;
           _isActive = schedule.isActive;
           _interval = intervalVal;
           _intervalController.text = intervalVal.toString();
@@ -443,13 +445,38 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                     }),
                   ],
                   onChanged: (value) {
-                    setState(() => _selectedCategoryId = value);
+                    setState(() {
+                      _selectedCategoryId = value;
+                      if (value != null) {
+                        final cat = categories.cast<Category?>().firstWhere(
+                              (c) => c?.id == value,
+                              orElse: () => null,
+                            );
+                        if (cat != null) {
+                          _selectedColor = AppColors.parseCategoryColor(cat.colorHex).toARGB32();
+                        }
+                      }
+                    });
                   },
                 );
               },
               loading: () => const SizedBox(height: 48, child: LinearProgressIndicator()),
               error: (_, __) => const SizedBox(),
             ),
+            const SizedBox(height: 20),
+
+            // WARNA JADWAL SECTION
+            Text(
+              'WARNA JADWAL',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildColorSelector(isDark),
             const SizedBox(height: 24),
 
             // PENGULANGAN SECTION
@@ -551,6 +578,70 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             child: const Text('Simpan Jadwal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
         ),
+      ),
+    );
+  }
+
+  static const List<Color> _presetColors = [
+    AppColors.categoryCoral,
+    AppColors.categoryAmber,
+    AppColors.categoryGreen,
+    AppColors.categoryTeal,
+    AppColors.categoryBlue,
+    AppColors.categoryPink,
+    Color(0xFF8E24AA), // Purple
+    Color(0xFF3949AB), // Indigo
+  ];
+
+  Widget _buildColorSelector(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: _presetColors.map((color) {
+          final colorVal = color.toARGB32();
+          final isSelected = _selectedColor == colorVal;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() => _selectedColor = colorVal);
+            },
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? (isDark ? Colors.white : Colors.black87)
+                      : Colors.transparent,
+                  width: 2.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : null,
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -983,6 +1074,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         time: DateTime(0, 0, 0, _selectedTime.hour, _selectedTime.minute),
         startDate: _selectedDate,
         notificationType: _notificationType.value,
+        color: _selectedColor ?? 0xFFFFFFFF,
         recurrenceType: _recurrenceType.value,
         recurrenceRule: rruleString,
         interval: _interval,

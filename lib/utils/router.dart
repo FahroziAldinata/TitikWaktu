@@ -8,6 +8,9 @@ import 'package:titik_waktu/features/schedule/screens/home_screen.dart';
 import 'package:titik_waktu/features/schedule/screens/add_schedule_screen.dart';
 import 'package:titik_waktu/features/schedule/screens/schedule_detail_screen.dart';
 import 'package:titik_waktu/features/alarm/screens/alarm_screen.dart';
+import 'package:titik_waktu/features/calendar/screens/monthly_calendar_screen.dart';
+import 'package:titik_waktu/features/history/screens/history_log_screen.dart';
+import 'package:titik_waktu/features/onboarding/screens/miui_onboarding_wizard_screen.dart';
 import 'package:titik_waktu/features/splash/screens/splash_screen.dart';
 
 CustomTransitionPage<void> _buildSharedAxisPage({
@@ -62,6 +65,13 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/onboarding/wizard',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: const MiuiOnboardingWizardScreen(),
+      ),
+    ),
+    GoRoute(
       path: '/permissions',
       pageBuilder: (context, state) => _buildSharedAxisPage(
         key: state.pageKey,
@@ -91,6 +101,20 @@ final appRouter = GoRouter(
         child: ScheduleDetailScreen(
           scheduleId: state.pathParameters['id'] ?? '',
         ),
+      ),
+    ),
+    GoRoute(
+      path: '/calendar',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: const MonthlyCalendarScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/history',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: const HistoryLogScreen(),
       ),
     ),
     GoRoute(

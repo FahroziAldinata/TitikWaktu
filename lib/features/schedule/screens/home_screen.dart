@@ -49,6 +49,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Titik Waktu'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month_rounded),
+            tooltip: 'Kalender Bulanan',
+            onPressed: () {
+              context.push('/calendar');
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Riwayat Aktivitas',
+            onPressed: () {
+              context.push('/history');
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.category_outlined),
             tooltip: 'Kelola Kategori',
             onPressed: () {
@@ -203,17 +217,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       subtitleText = category?.name ?? '';
     }
 
-    // Category dot color
-    Color? categoryDotColor;
-    if (category != null) {
-      categoryDotColor = AppColors.parseCategoryColor(category.colorHex);
+    // Schedule effective color
+    Color? scheduleEffectiveColor;
+    if (schedule.color != null && schedule.color != 0xFFFFFFFF && schedule.color != 0) {
+      scheduleEffectiveColor = Color(schedule.color!);
+    } else if (category != null) {
+      scheduleEffectiveColor = AppColors.parseCategoryColor(category.colorHex);
     }
+
+    final categoryDotColor = scheduleEffectiveColor;
 
     return Container(
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder, width: 0.5),
+        border: Border(
+          left: BorderSide(
+            color: scheduleEffectiveColor ?? (isUpcomingSoon ? cardBorder : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
+            width: 4,
+          ),
+          top: BorderSide(color: cardBorder, width: 0.5),
+          right: BorderSide(color: cardBorder, width: 0.5),
+          bottom: BorderSide(color: cardBorder, width: 0.5),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: InkWell(

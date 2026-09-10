@@ -127,6 +127,36 @@ class PermissionService {
     }
   }
 
+  Future<bool> openAutostartSettings() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      await _channel.invokeMethod('openAutostartSettings');
+      return true;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> openNotificationSettings() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      await _channel.invokeMethod('openNotificationSettings');
+      return true;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<bool> openAppDetailsSettings() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      await _channel.invokeMethod('openAppDetailsSettings');
+      return true;
+    } on PlatformException {
+      return false;
+    }
+  }
+
   Future<void> openAppSettings() async {
     await ph.openAppSettings();
   }

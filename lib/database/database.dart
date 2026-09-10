@@ -52,6 +52,7 @@ class HistoryLogs extends Table {
 @DriftDatabase(tables: [Schedules, HistoryLogs, Categories], daos: [SchedulesDao, CategoriesDao])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.forTesting(QueryExecutor e) : super(e);
 
   @override
   int get schemaVersion => DatabaseInitializer.dbVersion;

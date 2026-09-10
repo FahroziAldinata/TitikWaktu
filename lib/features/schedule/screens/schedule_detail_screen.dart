@@ -44,6 +44,13 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
         }
 
         final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
+        Color? scheduleEffectiveColor;
+        if (schedule.color != null && schedule.color != 0xFFFFFFFF && schedule.color != 0) {
+          scheduleEffectiveColor = Color(schedule.color!);
+        } else if (category != null) {
+          scheduleEffectiveColor = AppColors.parseCategoryColor(category.colorHex);
+        }
+
         final timeString =
             '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
         final dateString = schedule.startDate != null
@@ -82,9 +89,14 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                    width: 0.5,
+                  border: Border(
+                    left: BorderSide(
+                      color: scheduleEffectiveColor ?? (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                      width: 5,
+                    ),
+                    top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
+                    right: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
+                    bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
                   ),
                 ),
                 child: Column(

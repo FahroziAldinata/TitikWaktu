@@ -4,10 +4,12 @@ import 'package:rrule/rrule.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/database/schedules_dao.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
+import 'package:titik_waktu/repositories/history_repository.dart';
 import 'package:titik_waktu/repositories/schedule_repository.dart';
 import 'package:titik_waktu/services/alarm_service.dart';
 import 'package:titik_waktu/services/storage_service.dart';
 import 'package:titik_waktu/utils/recurrence_helper.dart';
+import 'package:titik_waktu/providers/history_provider.dart';
 
 /// Database singleton provider
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -37,14 +39,18 @@ final storageServiceProvider = Provider<StorageService>((ref) {
 /// Main schedule list notifier provider
 final scheduleListProvider = StateNotifierProvider<ScheduleListNotifier, AsyncValue<List<Schedule>>>((ref) {
   final repo = ref.watch(scheduleRepositoryProvider);
-  return ScheduleListNotifier(repo);
+  final historyRepo = ref.watch(historyRepositoryProvider);
+  return ScheduleListNotifier(repo, historyRepository: historyRepo);
 });
 
 class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
   final ScheduleRepository _repository;
+  final HistoryRepository? _historyRepository;
   final AlarmService _alarmService = AlarmService();
   
-  ScheduleListNotifier(this._repository) : super(const AsyncValue.loading()) {
+  ScheduleListNotifier(this._repository, {HistoryRepository? historyRepository})
+      : _historyRepository = historyRepository,
+        super(const AsyncValue.loading()) {
     _loadSchedules();
   }
   
@@ -53,6 +59,10 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
     try {
       final schedules = await _repository.getAllSchedules();
       state = AsyncValue.data(schedules);
+
+      if (_historyRepository != null) {
+        _historyRepository!.checkAndLogMissedSchedules(schedules);
+      }
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -90,6 +100,10 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
         // Safe error handling so alarm failure doesn't block DB persistence
         print('Warning: Alarm scheduling failed on create: $e');
       }
+      
+      try {
+        await _historyRepository?.addLog('SCHEDULE_CREATED: ${schedule.title}');
+      } catch (_) {}
       
       await _loadSchedules();
     } catch (e, st) {
@@ -136,6 +150,10 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
         print('Warning: Alarm update failed: $e');
       }
       
+      try {
+        await _historyRepository?.addLog('SCHEDULE_UPDATED: ${schedule.title}');
+      } catch (_) {}
+      
       await _loadSchedules();
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -145,6 +163,10 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
   
   Future<void> deleteSchedule(int id) async {
     try {
+      final schedules = state.valueOrNull ?? [];
+      final target = schedules.cast<Schedule?>().firstWhere((s) => s?.id == id, orElse: () => null);
+      final title = target?.title ?? 'ID $id';
+
       await _repository.deleteSchedule(id);
       
       try {
@@ -152,6 +174,10 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
       } catch (e) {
         print('Warning: Alarm cancel failed: $e');
       }
+      
+      try {
+        await _historyRepository?.addLog('SCHEDULE_DELETED: $title');
+      } catch (_) {}
       
       await _loadSchedules();
     } catch (e, st) {

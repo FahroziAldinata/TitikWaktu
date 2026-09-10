@@ -16,6 +16,34 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   }
   Future<int> deleteSchedule(Insertable<Schedule> schedule) => delete(schedules).delete(schedule);
 
+  // --- History Logs Operations ---
+  Future<List<HistoryLog>> getAllHistoryLogs() {
+    final query = select(historyLogs)
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.timestamp),
+        (tbl) => OrderingTerm.desc(tbl.id),
+      ]);
+    return query.get();
+  }
+
+  Stream<List<HistoryLog>> watchAllHistoryLogs() {
+    final query = select(historyLogs)
+      ..orderBy([
+        (tbl) => OrderingTerm.desc(tbl.timestamp),
+        (tbl) => OrderingTerm.desc(tbl.id),
+      ]);
+    return query.watch();
+  }
+
+  Future<int> insertHistoryLog(Insertable<HistoryLog> log) => into(historyLogs).insert(log);
+
+  Future<int> clearAllHistoryLogs() => delete(historyLogs).go();
+
+  Future<int> deleteHistoryLog(int id) {
+    final query = delete(historyLogs)..where((tbl) => tbl.id.equals(id));
+    return query.go();
+  }
+
   /// Get schedule by ID
   Future<Schedule?> getScheduleById(int id) async {
     final query = select(schedules)..where((tbl) => tbl.id.equals(id));

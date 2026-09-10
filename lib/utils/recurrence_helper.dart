@@ -457,4 +457,115 @@ class RecurrenceHelper {
     results.sort((a, b) => a.actualDateTime.compareTo(b.actualDateTime));
     return results.take(limit).toList();
   }
+
+  /// Check if a schedule occurs on a specific calendar date (ignoring time-of-day for date match)
+  static OccurrenceInfo? getOccurrenceForDate(Schedule schedule, DateTime date) {
+    if (!schedule.isActive || schedule.startDate == null) return null;
+
+    final targetDate = DateTime(date.year, date.month, date.day);
+    final targetKey = formatDateKey(targetDate);
+    final startDay = DateTime(
+      schedule.startDate!.year,
+      schedule.startDate!.month,
+      schedule.startDate!.day,
+    );
+
+    final exceptionSet = parseExceptionDates(schedule.exceptionDates);
+    if (exceptionSet.contains(targetKey)) {
+      return null;
+    }
+
+    final rescheduledMap = parseRescheduledDates(schedule.rescheduledDates);
+
+    // 1. Check if any occurrence was rescheduled TO this targetDate
+    for (final entry in rescheduledMap.entries) {
+      final resOrigKey = entry.key;
+      final resTargetDt = entry.value;
+      final resTargetDateOnly = DateTime(resTargetDt.year, resTargetDt.month, resTargetDt.day);
+
+      if (resTargetDateOnly.isAtSameMomentAs(targetDate)) {
+        if (!exceptionSet.contains(resOrigKey)) {
+          final origDate = parseDateKey(resOrigKey) ?? targetDate;
+          return OccurrenceInfo(
+            originalDate: origDate,
+            actualDateTime: resTargetDt,
+            isRescheduled: true,
+          );
+        }
+      }
+    }
+
+    // 2. If targetDate was originally scheduled, check if it was rescheduled AWAY
+    if (rescheduledMap.containsKey(targetKey)) {
+      return null;
+    }
+
+    // 3. Single occurrence check
+    if (schedule.recurrenceRule == null ||
+        schedule.recurrenceRule!.trim().isEmpty ||
+        schedule.recurrenceType == RecurrenceType.once.value ||
+        schedule.recurrenceType == RecurrenceType.none.value) {
+      if (startDay.isAtSameMomentAs(targetDate)) {
+        return OccurrenceInfo(
+          originalDate: startDay,
+          actualDateTime: DateTime(
+            targetDate.year,
+            targetDate.month,
+            targetDate.day,
+            schedule.time.hour,
+            schedule.time.minute,
+          ),
+          isRescheduled: false,
+        );
+      }
+      return null;
+    }
+
+    // 4. RRULE instance check
+    try {
+      if (targetDate.isBefore(startDay)) return null;
+
+      final rrule = RecurrenceRule.fromString(schedule.recurrenceRule!);
+      final startUtc = DateTime.utc(
+        startDay.year,
+        startDay.month,
+        startDay.day,
+        schedule.time.hour,
+        schedule.time.minute,
+      );
+      final dayStartUtc = DateTime.utc(targetDate.year, targetDate.month, targetDate.day, 0, 0, 0);
+      final dayEndUtc = DateTime.utc(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
+
+      final instances = rrule.getInstances(
+        start: startUtc,
+        after: dayStartUtc.isBefore(startUtc) ? startUtc : dayStartUtc,
+        before: dayEndUtc,
+        includeAfter: true,
+        includeBefore: true,
+      );
+
+      if (instances.isNotEmpty) {
+        return OccurrenceInfo(
+          originalDate: targetDate,
+          actualDateTime: DateTime(
+            targetDate.year,
+            targetDate.month,
+            targetDate.day,
+            schedule.time.hour,
+            schedule.time.minute,
+          ),
+          isRescheduled: false,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error evaluating RRULE for date: $e');
+    }
+
+    return null;
+  }
+
+  /// Helper returning boolean if schedule occurs on target date
+  static bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
+    return getOccurrenceForDate(schedule, date) != null;
+  }
 }
