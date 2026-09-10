@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rrule/rrule.dart';
@@ -8,6 +9,7 @@ import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
+import 'package:titik_waktu/utils/recurrence_helper.dart';
 
 class AddScheduleScreen extends ConsumerStatefulWidget {
   final String? scheduleId;
@@ -22,6 +24,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _intervalController = TextEditingController(text: '1');
 
   late TimeOfDay _selectedTime;
   DateTime _selectedDate = DateTime.now();
@@ -30,11 +33,24 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   int? _selectedCategoryId;
   bool _isActive = true;
 
+  // Custom recurrence options
+  int _interval = 1;
+  Set<int> _selectedWeekdays = {DateTime.now().weekday}; // 1 = Monday .. 7 = Sunday
+  MonthlyPatternType _monthlyPattern = MonthlyPatternType.dayOfMonth;
+  int _dayOfMonth = DateTime.now().day;
+  int _nthWeekdayOrdinal = 1; // 1..4, -1 for last
+  int _nthWeekday = DateTime.now().weekday; // 1 = Monday .. 7 = Sunday
+
   @override
   void initState() {
     super.initState();
     final defaultTime = DateTime.now().add(const Duration(minutes: 2));
     _selectedTime = TimeOfDay(hour: defaultTime.hour, minute: defaultTime.minute);
+    _dayOfMonth = _selectedDate.day;
+    _selectedWeekdays = {_selectedDate.weekday};
+    _nthWeekday = _selectedDate.weekday;
+    _intervalController.text = '1';
+
     if (widget.scheduleId != null) {
       _loadSchedule();
     }
@@ -49,18 +65,38 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
       final schedule = await repo.getScheduleById(scheduleIdInt);
       if (schedule != null && mounted) {
         RecurrenceType recType = RecurrenceType.once;
+        int intervalVal = 1;
+        Set<int> weekdays = {schedule.startDate?.weekday ?? DateTime.now().weekday};
+        MonthlyPatternType monthlyPat = MonthlyPatternType.dayOfMonth;
+        int dom = schedule.startDate?.day ?? DateTime.now().day;
+        int nthOrd = 1;
+        int nthDay = schedule.startDate?.weekday ?? DateTime.now().weekday;
+
         if (schedule.recurrenceRule != null && schedule.recurrenceRule!.isNotEmpty) {
           try {
             final rrule = RecurrenceRule.fromString(schedule.recurrenceRule!);
+            intervalVal = rrule.interval ?? 1;
             switch (rrule.frequency) {
               case Frequency.daily:
                 recType = RecurrenceType.daily;
                 break;
               case Frequency.weekly:
                 recType = RecurrenceType.weekly;
+                if (rrule.byWeekDays.isNotEmpty) {
+                  weekdays = rrule.byWeekDays.map((d) => d.day).toSet();
+                }
                 break;
               case Frequency.monthly:
                 recType = RecurrenceType.monthly;
+                if (rrule.byMonthDays.isNotEmpty) {
+                  monthlyPat = MonthlyPatternType.dayOfMonth;
+                  dom = rrule.byMonthDays.first;
+                } else if (rrule.byWeekDays.isNotEmpty) {
+                  monthlyPat = MonthlyPatternType.nthWeekday;
+                  final byWeekDay = rrule.byWeekDays.first;
+                  nthDay = byWeekDay.day;
+                  nthOrd = byWeekDay.occurrence ?? 1;
+                }
                 break;
               default:
                 recType = RecurrenceType.once;
@@ -68,6 +104,8 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
           } catch (_) {
             recType = RecurrenceType.once;
           }
+        } else {
+          recType = RecurrenceType.fromValue(schedule.recurrenceType);
         }
 
         setState(() {
@@ -79,6 +117,13 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
           _recurrenceType = recType;
           _selectedCategoryId = schedule.categoryId;
           _isActive = schedule.isActive;
+          _interval = intervalVal;
+          _intervalController.text = intervalVal.toString();
+          _selectedWeekdays = weekdays;
+          _monthlyPattern = monthlyPat;
+          _dayOfMonth = dom;
+          _nthWeekdayOrdinal = nthOrd;
+          _nthWeekday = nthDay;
         });
       }
     } catch (e) {
@@ -90,7 +135,44 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _intervalController.dispose();
     super.dispose();
+  }
+
+  void _onIntervalChanged(String val) {
+    final parsed = int.tryParse(val);
+    if (parsed != null && parsed > 0) {
+      setState(() => _interval = parsed);
+    }
+  }
+
+  void _incrementInterval() {
+    setState(() {
+      _interval++;
+      _intervalController.text = _interval.toString();
+    });
+  }
+
+  void _decrementInterval() {
+    if (_interval > 1) {
+      setState(() {
+        _interval--;
+        _intervalController.text = _interval.toString();
+      });
+    }
+  }
+
+  String _getPreviewText() {
+    return RecurrenceHelper.formatHumanReadable(
+      recurrenceType: _recurrenceType,
+      startDate: _selectedDate,
+      interval: _interval,
+      selectedWeekdays: _selectedWeekdays.toList(),
+      monthlyPattern: _monthlyPattern,
+      dayOfMonth: _dayOfMonth,
+      nthOrdinal: _nthWeekdayOrdinal,
+      nthWeekday: _nthWeekday,
+    );
   }
 
   @override
@@ -120,7 +202,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           children: [
-            // Title Input (Underline Style)
+            // Title Input
             TextFormField(
               controller: _titleController,
               style: theme.textTheme.titleMedium?.copyWith(fontSize: 16),
@@ -137,7 +219,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Description Input (Underline Style)
+            // Description Input
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
@@ -148,7 +230,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Waktu Besar & Interaktif (38-40px)
+            // Waktu Besar & Interaktif
             Text(
               'WAKTU',
               style: TextStyle(
@@ -258,7 +340,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Tipe Notifikasi: Dua Kartu Toggle Side-by-Side dengan Highlight Amber
+            // Tipe Notifikasi
             Text(
               'TIPE NOTIFIKASI',
               style: TextStyle(
@@ -370,7 +452,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Pengulangan (Dropdown)
+            // PENGULANGAN SECTION
             Text(
               'PENGULANGAN',
               style: TextStyle(
@@ -382,6 +464,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<RecurrenceType>(
+              key: ValueKey(_recurrenceType),
               initialValue: _recurrenceType,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -407,7 +490,6 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                 DropdownMenuItem(value: RecurrenceType.daily, child: Text('Harian')),
                 DropdownMenuItem(value: RecurrenceType.weekly, child: Text('Mingguan')),
                 DropdownMenuItem(value: RecurrenceType.monthly, child: Text('Bulanan')),
-                DropdownMenuItem(value: RecurrenceType.customInterval, child: Text('Custom Interval')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -415,6 +497,29 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                 }
               },
             ),
+
+            // Custom Interval Options
+            if (_recurrenceType != RecurrenceType.once && _recurrenceType != RecurrenceType.none) ...[
+              const SizedBox(height: 16),
+              _buildIntervalInput(isDark),
+            ],
+
+            // Weekly Day Selector
+            if (_recurrenceType == RecurrenceType.weekly) ...[
+              const SizedBox(height: 16),
+              _buildWeeklyDaySelector(isDark),
+            ],
+
+            // Monthly Pattern Selector
+            if (_recurrenceType == RecurrenceType.monthly) ...[
+              const SizedBox(height: 16),
+              _buildMonthlyPatternSelector(isDark),
+            ],
+
+            // Human-readable preview card
+            const SizedBox(height: 16),
+            _buildRecurrencePreviewCard(isDark),
+
             const SizedBox(height: 24),
 
             // Switch Aktif
@@ -446,6 +551,316 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             child: const Text('Simpan Jadwal', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildIntervalInput(bool isDark) {
+    String unitLabel = 'hari';
+    if (_recurrenceType == RecurrenceType.weekly) unitLabel = 'minggu';
+    if (_recurrenceType == RecurrenceType.monthly) unitLabel = 'bulan';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 0.5,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Ulangi setiap:',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline, size: 22),
+                onPressed: _decrementInterval,
+                tooltip: 'Kurangi',
+              ),
+              SizedBox(
+                width: 44,
+                child: TextFormField(
+                  controller: _intervalController,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: _onIntervalChanged,
+                  validator: (val) {
+                    final n = int.tryParse(val ?? '');
+                    if (n == null || n <= 0) {
+                      return 'Harus > 0';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline, size: 22),
+                onPressed: _incrementInterval,
+                tooltip: 'Tambah',
+              ),
+              const SizedBox(width: 4),
+              Text(
+                unitLabel,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyDaySelector(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'HARI PENGULANGAN',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(7, (index) {
+            final weekday = index + 1; // 1 = Monday .. 7 = Sunday
+            final isSelected = _selectedWeekdays.contains(weekday);
+            final dayLabel = RecurrenceHelper.dayShortNames[index];
+
+            return InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    if (_selectedWeekdays.length > 1) {
+                      _selectedWeekdays.remove(weekday);
+                    }
+                  } else {
+                    _selectedWeekdays.add(weekday);
+                  }
+                });
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                      : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? (isDark ? AppColors.amberDarkHighlightBorder : AppColors.amberLightHighlightBorder)
+                        : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                    width: isSelected ? 1.5 : 0.5,
+                  ),
+                ),
+                child: Text(
+                  dayLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? (isDark ? Colors.black : Colors.white)
+                        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthlyPatternSelector(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Mode 1: Tanggal Spesifik
+          InkWell(
+            onTap: () {
+              setState(() => _monthlyPattern = MonthlyPatternType.dayOfMonth);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    _monthlyPattern == MonthlyPatternType.dayOfMonth
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 20,
+                    color: _monthlyPattern == MonthlyPatternType.dayOfMonth
+                        ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Pada tanggal: ', style: TextStyle(fontSize: 13)),
+                  DropdownButton<int>(
+                    value: _dayOfMonth,
+                    underline: const SizedBox(),
+                    items: List.generate(31, (index) {
+                      final d = index + 1;
+                      return DropdownMenuItem(value: d, child: Text('$d'));
+                    }),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _dayOfMonth = val;
+                          _monthlyPattern = MonthlyPatternType.dayOfMonth;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 8),
+
+          // Mode 2: N-th Weekday (misal: "Senin pertama")
+          InkWell(
+            onTap: () {
+              setState(() => _monthlyPattern = MonthlyPatternType.nthWeekday);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    _monthlyPattern == MonthlyPatternType.nthWeekday
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    size: 20,
+                    color: _monthlyPattern == MonthlyPatternType.nthWeekday
+                        ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                        : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text('Pada: ', style: TextStyle(fontSize: 13)),
+                        DropdownButton<int>(
+                          value: _nthWeekday,
+                          underline: const SizedBox(),
+                          items: List.generate(7, (idx) {
+                            return DropdownMenuItem(
+                              value: idx + 1,
+                              child: Text(RecurrenceHelper.dayFullNames[idx], style: const TextStyle(fontSize: 13)),
+                            );
+                          }),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _nthWeekday = val;
+                                _monthlyPattern = MonthlyPatternType.nthWeekday;
+                              });
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                        DropdownButton<int>(
+                          value: _nthWeekdayOrdinal,
+                          underline: const SizedBox(),
+                          items: const [
+                            DropdownMenuItem(value: 1, child: Text('pertama', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 2, child: Text('kedua', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 3, child: Text('ketiga', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 4, child: Text('keempat', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: -1, child: Text('terakhir', style: TextStyle(fontSize: 13))),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _nthWeekdayOrdinal = val;
+                                _monthlyPattern = MonthlyPatternType.nthWeekday;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecurrencePreviewCard(bool isDark) {
+    final previewText = _getPreviewText();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.amberDarkHighlightBg : AppColors.amberLightHighlightBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? AppColors.amberDarkHighlightBorder : AppColors.amberLightHighlightBorder,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.autorenew_rounded,
+            size: 20,
+            color: isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              previewText,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.amberDarkHighlightTitle : AppColors.amberLightHighlightTitle,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -536,7 +951,14 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        _dayOfMonth = picked.day;
+        _nthWeekday = picked.weekday;
+        if (_selectedWeekdays.isEmpty) {
+          _selectedWeekdays = {picked.weekday};
+        }
+      });
     }
   }
 
@@ -544,23 +966,15 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
     if (_formKey.currentState!.validate()) {
       final scheduleIdInt = int.tryParse(widget.scheduleId ?? '') ?? 0;
 
-      String? rruleString;
-      switch (_recurrenceType) {
-        case RecurrenceType.daily:
-          rruleString = 'RRULE:FREQ=DAILY;INTERVAL=1';
-          break;
-        case RecurrenceType.weekly:
-          rruleString = 'RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,TU,WE,TH,FR,SA,SU';
-          break;
-        case RecurrenceType.monthly:
-          rruleString = 'RRULE:FREQ=MONTHLY;INTERVAL=1;BYMONTHDAY=${_selectedDate.day}';
-          break;
-        case RecurrenceType.once:
-        case RecurrenceType.none:
-        default:
-          rruleString = null;
-          break;
-      }
+      final rruleString = RecurrenceHelper.buildRruleString(
+        type: _recurrenceType,
+        interval: _interval,
+        selectedWeekdays: _selectedWeekdays.toList(),
+        monthlyPattern: _monthlyPattern,
+        dayOfMonth: _dayOfMonth,
+        nthWeekdayOrdinal: _nthWeekdayOrdinal,
+        nthWeekday: _nthWeekday,
+      );
 
       final schedule = Schedule(
         id: scheduleIdInt,
@@ -571,7 +985,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         notificationType: _notificationType.value,
         recurrenceType: _recurrenceType.value,
         recurrenceRule: rruleString,
-        interval: 1,
+        interval: _interval,
         categoryId: _selectedCategoryId,
         isActive: _isActive,
         createdAt: DateTime.now(),

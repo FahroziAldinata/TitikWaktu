@@ -7,6 +7,7 @@ import 'package:titik_waktu/models/schedule_enums.dart';
 import 'package:titik_waktu/repositories/schedule_repository.dart';
 import 'package:titik_waktu/services/alarm_service.dart';
 import 'package:titik_waktu/services/storage_service.dart';
+import 'package:titik_waktu/utils/recurrence_helper.dart';
 
 /// Database singleton provider
 final databaseProvider = Provider<AppDatabase>((ref) {
@@ -165,6 +166,47 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
     final updated = schedule.copyWith(isActive: !schedule.isActive);
     await updateSchedule(updated);
   }
+
+  Future<void> addExceptionDate(int scheduleId, DateTime date) async {
+    final schedules = state.valueOrNull ?? [];
+    final schedule = schedules.firstWhere((s) => s.id == scheduleId);
+    final updatedExceptions = RecurrenceHelper.addExceptionDate(schedule.exceptionDates, date);
+    final updated = schedule.copyWith(exceptionDates: Value(updatedExceptions));
+    await updateSchedule(updated);
+  }
+
+  Future<void> removeExceptionDate(int scheduleId, String dateKey) async {
+    final schedules = state.valueOrNull ?? [];
+    final schedule = schedules.firstWhere((s) => s.id == scheduleId);
+    final updatedExceptions = RecurrenceHelper.removeExceptionDate(schedule.exceptionDates, dateKey);
+    final updated = schedule.copyWith(exceptionDates: Value(updatedExceptions));
+    await updateSchedule(updated);
+  }
+
+  Future<void> rescheduleSingleOccurrence(
+    int scheduleId, {
+    required DateTime originalDate,
+    required DateTime newDateTime,
+  }) async {
+    final schedules = state.valueOrNull ?? [];
+    final schedule = schedules.firstWhere((s) => s.id == scheduleId);
+    final updatedRescheduled = RecurrenceHelper.addRescheduledOccurrence(
+      schedule.rescheduledDates,
+      originalDate: originalDate,
+      newDateTime: newDateTime,
+    );
+    final updated = schedule.copyWith(rescheduledDates: Value(updatedRescheduled));
+    await updateSchedule(updated);
+  }
+
+  Future<void> resetOccurrence(int scheduleId, DateTime originalDate) async {
+    final schedules = state.valueOrNull ?? [];
+    final schedule = schedules.firstWhere((s) => s.id == scheduleId);
+    final origKey = RecurrenceHelper.formatDateKey(originalDate);
+    final updatedRescheduled = RecurrenceHelper.removeRescheduledOccurrence(schedule.rescheduledDates, origKey);
+    final updated = schedule.copyWith(rescheduledDates: Value(updatedRescheduled));
+    await updateSchedule(updated);
+  }
 }
 
 bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
@@ -177,7 +219,43 @@ bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
     schedule.startDate!.day,
   );
   final targetDay = DateTime(date.year, date.month, date.day);
+  final targetKey = RecurrenceHelper.formatDateKey(targetDay);
 
+  // Check exception dates: if targetDay itself is in exceptionDates, it MUST NOT occur (Exception always wins)
+  final exceptionSet = RecurrenceHelper.parseExceptionDates(schedule.exceptionDates);
+  if (exceptionSet.contains(targetKey)) {
+    return false;
+  }
+
+  // 1. Check if an occurrence was rescheduled TO targetDay
+  final rescheduledMap = RecurrenceHelper.parseRescheduledDates(schedule.rescheduledDates);
+  for (final entry in rescheduledMap.entries) {
+    final origKey = entry.key;
+    final reschedDate = entry.value;
+
+    // If the original date of this rescheduled occurrence is also an exception, skip it
+    if (exceptionSet.contains(origKey)) {
+      continue;
+    }
+
+    if (reschedDate.year == targetDay.year &&
+        reschedDate.month == targetDay.month &&
+        reschedDate.day == targetDay.day) {
+      return true;
+    }
+  }
+
+  // 2. Check if original occurrence on targetDay was moved AWAY to another date
+  if (rescheduledMap.containsKey(targetKey)) {
+    final movedTo = rescheduledMap[targetKey]!;
+    if (movedTo.year != targetDay.year ||
+        movedTo.month != targetDay.month ||
+        movedTo.day != targetDay.day) {
+      return false; // Occurrence moved away from targetDay
+    }
+  }
+
+  // 4. Check boundaries
   if (targetDay.isBefore(startDay)) return false;
 
   if (schedule.endDate != null) {
@@ -189,18 +267,7 @@ bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
     if (targetDay.isAfter(endDay)) return false;
   }
 
-  // Check exception dates
-  if (schedule.exceptionDates != null && schedule.exceptionDates!.isNotEmpty) {
-    final targetStr =
-        '${targetDay.year.toString().padLeft(4, '0')}-${targetDay.month.toString().padLeft(2, '0')}-${targetDay.day.toString().padLeft(2, '0')}';
-    final exceptions =
-        schedule.exceptionDates!.split(',').map((e) => e.trim()).toList();
-    if (exceptions.contains(targetStr)) {
-      return false;
-    }
-  }
-
-  // If no RRULE string is present, evaluate as single occurrence or legacy fallback
+  // 5. If no RRULE string is present, evaluate as single occurrence or legacy fallback
   if (schedule.recurrenceRule == null ||
       schedule.recurrenceRule!.trim().isEmpty) {
     final recurrence = RecurrenceType.fromValue(schedule.recurrenceType);
@@ -279,4 +346,5 @@ final dailySchedulesProvider = Provider<AsyncValue<List<Schedule>>>((ref) {
       ..sort((a, b) => a.time.compareTo(b.time));
   });
 });
+
 
