@@ -49,9 +49,13 @@ android/app/build/
 # Local development / Database
 *.db
 *.sqlite
+*.hprof
+android/local.properties
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # OpenCode
 .opencode/
 
 # Test Evidence & Local Screenshots
 test_evidence/
+
