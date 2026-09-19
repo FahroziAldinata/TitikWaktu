@@ -84,23 +84,32 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
             children: [
               // Header Waktu Besar
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border(
-                    left: BorderSide(
-                      color: scheduleEffectiveColor ?? (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                      width: 5,
-                    ),
-                    top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
-                    right: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
-                    bottom: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder, width: 0.5),
+                  border: Border.all(
+                    color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                    width: 0.5,
                   ),
                 ),
-                child: Column(
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
                   children: [
+                    if (scheduleEffectiveColor != null)
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 5,
+                          color: scheduleEffectiveColor,
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                      child: Column(
+                        children: [
                     Text(
                       timeString,
                       style: TextStyle(
@@ -157,6 +166,9 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
               const SizedBox(height: 20),
 
               // Detail Item Cards (Grid or Rows)

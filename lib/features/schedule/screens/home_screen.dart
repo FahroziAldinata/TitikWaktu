@@ -199,6 +199,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       cardBorder = isDark ? AppColors.amberDarkHighlightBorder : AppColors.amberLightHighlightBorder;
       titleColor = isDark ? AppColors.amberDarkHighlightTitle : AppColors.amberLightHighlightTitle;
       subtitleColor = isDark ? AppColors.amberDarkHighlightSubtitle : AppColors.amberLightHighlightSubtitle;
+    } else if (!schedule.isActive) {
+      cardBg = isDark ? AppColors.darkSurface.withValues(alpha: 0.5) : AppColors.lightSurface.withValues(alpha: 0.7);
+      cardBorder = isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : AppColors.lightBorder.withValues(alpha: 0.6);
+      titleColor = isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7);
+      subtitleColor = isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.45) : AppColors.lightTextSecondary.withValues(alpha: 0.55);
     } else {
       cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
       cardBorder = isDark ? AppColors.darkBorder : AppColors.lightBorder;
@@ -208,11 +213,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final timeString = '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
 
-    // Subtitle content: countdown if < 15m, else category name
+    // Subtitle content: countdown if < 15m, inactive label if inactive, else category name
     String subtitleText;
     if (isUpcomingSoon) {
       final mins = difference.inMinutes;
       subtitleText = mins == 0 ? 'Kurang dari 1 menit lagi' : '$mins menit lagi';
+    } else if (!schedule.isActive) {
+      subtitleText = category != null ? '${category.name} • Nonaktif' : 'Nonaktif';
     } else {
       subtitleText = category?.name ?? '';
     }
@@ -224,6 +231,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } else if (category != null) {
       scheduleEffectiveColor = AppColors.parseCategoryColor(category.colorHex);
     }
+    if (!schedule.isActive && scheduleEffectiveColor != null) {
+      scheduleEffectiveColor = scheduleEffectiveColor.withValues(alpha: 0.35);
+    }
 
     final categoryDotColor = scheduleEffectiveColor;
 
@@ -231,21 +241,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(
-            color: scheduleEffectiveColor ?? (isUpcomingSoon ? cardBorder : (isDark ? AppColors.darkBorder : AppColors.lightBorder)),
-            width: 4,
-          ),
-          top: BorderSide(color: cardBorder, width: 0.5),
-          right: BorderSide(color: cardBorder, width: 0.5),
-          bottom: BorderSide(color: cardBorder, width: 0.5),
-        ),
+        border: Border.all(color: cardBorder, width: 0.5),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () => context.push('/schedule/${schedule.id}'),
-        child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          if (scheduleEffectiveColor != null)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(
+                width: 4,
+                color: scheduleEffectiveColor,
+              ),
+            ),
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.push('/schedule/${schedule.id}'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
           children: [
             // Time Display (38-40px or compact structured)
             Column(
@@ -329,9 +345,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id);
               },
             ),
-          ],
+              ],
+            ),
+          ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 }

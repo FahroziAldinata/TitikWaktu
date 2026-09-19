@@ -239,7 +239,6 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
 }
 
 bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
-  if (!schedule.isActive) return false;
   if (schedule.startDate == null) return false;
 
   final startDay = DateTime(

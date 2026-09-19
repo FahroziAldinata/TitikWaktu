@@ -142,6 +142,7 @@ final bulkScheduleProvider =
 final categorySchedulesProvider =
     FutureProvider.autoDispose.family<List<Schedule>, int>(
   (ref, categoryId) async {
+    ref.watch(scheduleListProvider);
     final repo = ref.watch(scheduleRepositoryProvider);
     return repo.getSchedulesByCategory(categoryId);
   },

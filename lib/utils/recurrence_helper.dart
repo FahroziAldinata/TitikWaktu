@@ -326,7 +326,7 @@ class RecurrenceHelper {
     int limit = 10,
     DateTime? fromDate,
   }) {
-    if (!schedule.isActive || schedule.startDate == null) {
+    if (schedule.startDate == null) {
       return [];
     }
 
@@ -460,7 +460,7 @@ class RecurrenceHelper {
 
   /// Check if a schedule occurs on a specific calendar date (ignoring time-of-day for date match)
   static OccurrenceInfo? getOccurrenceForDate(Schedule schedule, DateTime date) {
-    if (!schedule.isActive || schedule.startDate == null) return null;
+    if (schedule.startDate == null) return null;
 
     final targetDate = DateTime(date.year, date.month, date.day);
     final targetKey = formatDateKey(targetDate);

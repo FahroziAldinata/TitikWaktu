@@ -86,8 +86,6 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
       ),
       body: schedulesAsync.when(
         data: (allSchedules) {
-          final activeSchedules = allSchedules.where((s) => s.isActive).toList();
-
           return Column(
             children: [
               // Month Header with Prev/Next Navigation
@@ -100,7 +98,7 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                   children: [
                     _buildWeekdayLabels(isDark),
                     const SizedBox(height: 6),
-                    _buildMonthGrid(activeSchedules, categoryMap, isDark),
+                    _buildMonthGrid(allSchedules, categoryMap, isDark),
                   ],
                 ),
               ),
@@ -109,7 +107,7 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
 
               // Selected Date Schedule List Section
               Expanded(
-                child: _buildSelectedDateScheduleList(activeSchedules, categoryMap, isDark),
+                child: _buildSelectedDateScheduleList(allSchedules, categoryMap, isDark),
               ),
             ],
           );
@@ -172,7 +170,7 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
   }
 
   Widget _buildMonthGrid(
-    List<Schedule> activeSchedules,
+    List<Schedule> allSchedules,
     Map<int, Category> categoryMap,
     bool isDark,
   ) {
@@ -210,7 +208,7 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
             cellDate.day == _selectedDate.day;
 
         // Find schedules occurring on this day
-        final daySchedules = activeSchedules.where((s) {
+        final daySchedules = allSchedules.where((s) {
           return RecurrenceHelper.isScheduleOccurringOn(s, cellDate);
         }).toList();
 
@@ -253,16 +251,22 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: daySchedules.take(3).map((s) {
-                      final dotColor = isSelected
+                      final baseColor = isSelected
                           ? (isDark ? Colors.black87 : Colors.white)
                           : _getScheduleColor(s, categoryMap);
+                      final dotColor = s.isActive
+                          ? baseColor
+                          : baseColor.withValues(alpha: 0.5);
                       return Container(
                         width: 4.5,
                         height: 4.5,
                         margin: const EdgeInsets.symmetric(horizontal: 1),
                         decoration: BoxDecoration(
-                          color: dotColor,
+                          color: s.isActive ? dotColor : Colors.transparent,
                           shape: BoxShape.circle,
+                          border: s.isActive
+                              ? null
+                              : Border.all(color: dotColor, width: 1),
                         ),
                       );
                     }).toList(),
@@ -372,23 +376,24 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border(
-                          left: BorderSide(color: scheduleColor, width: 4),
-                          top: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                            width: 0.5,
-                          ),
-                          right: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                            width: 0.5,
-                          ),
-                          bottom: BorderSide(
-                            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                            width: 0.5,
-                          ),
+                        border: Border.all(
+                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                          width: 0.5,
                         ),
                       ),
-                      child: ListTile(
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 4,
+                              color: scheduleColor,
+                            ),
+                          ),
+                          ListTile(
                         onTap: () => context.push('/schedule/${schedule.id}'),
                         title: Row(
                           children: [
@@ -462,8 +467,10 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                           color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                         ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
+                );
+              },
                 ),
         ),
       ],

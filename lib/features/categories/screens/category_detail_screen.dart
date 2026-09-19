@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/bulk_schedule_provider.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
+import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
 
@@ -144,29 +145,58 @@ class CategoryDetailScreen extends ConsumerWidget {
               final s = schedules[index];
               final dateStr = AppDateFormatter.formatFullDate(s.startDate ?? s.time);
               final timeStr = AppDateFormatter.formatTime(s.time);
+              final isActive = s.isActive;
+              final effectiveCatColor = isActive ? catColor : catColor.withValues(alpha: 0.35);
+              final effectiveTitleColor = isActive
+                  ? null
+                  : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.7) : AppColors.lightTextSecondary.withValues(alpha: 0.7));
+              final effectiveSubtitle = isActive ? dateStr : '$dateStr • Nonaktif';
+
               return Card(
                 child: ListTile(
+                  onTap: () => context.push('/schedule/${s.id}'),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                   leading: Container(
                     width: 4,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: catColor,
+                      color: effectiveCatColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  title: Text(s.title, style: theme.textTheme.titleSmall),
-                  subtitle: Text(dateStr, style: theme.textTheme.bodySmall),
-                  trailing: Text(
-                    timeStr,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'monospace',
-                      color: isDark
-                          ? AppColors.amberDarkIndicator
-                          : AppColors.amberLightIndicator,
+                  title: Text(
+                    s.title,
+                    style: theme.textTheme.titleSmall?.copyWith(color: effectiveTitleColor),
+                  ),
+                  subtitle: Text(
+                    effectiveSubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isActive ? null : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.5) : AppColors.lightTextSecondary.withValues(alpha: 0.6)),
                     ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        timeStr,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'monospace',
+                          color: isActive
+                              ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                              : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: isActive,
+                        activeThumbColor: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        onChanged: (val) {
+                          ref.read(scheduleListProvider.notifier).toggleSchedule(s.id);
+                        },
+                      ),
+                    ],
                   ),
                 ),
               );
