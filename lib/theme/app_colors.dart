@@ -32,6 +32,17 @@ class AppColors {
   static const amberDarkHighlightTitle = Color(0xFFFAC775);
   static const amberDarkHighlightSubtitle = Color(0xFFEF9F27);
 
+  // --- Status & Semantic Tokens ---
+  static const statusSuccess = Color(0xFF1D9E75); // Emerald/Teal success indicator
+  static const statusSuccessLightContainer = Color(0xFFE8F6F1);
+  static const statusSuccessLightBorder = Color(0xFFC3E7DA);
+  static const statusSuccessDarkContainer = Color(0xFF133327);
+  static const statusSuccessDarkBorder = Color(0xFF1D5C45);
+
+  static const statusError = Color(0xFFD85A30);
+  static const statusErrorLightContainer = Color(0xFFFDE8E8);
+  static const statusErrorDarkContainer = Color(0xFF3B1212);
+
   // --- 6 Palet Warna Kategori Solid ---
   static const categoryGreen = Color(0xFF639922);
   static const categoryBlue = Color(0xFF378ADD);

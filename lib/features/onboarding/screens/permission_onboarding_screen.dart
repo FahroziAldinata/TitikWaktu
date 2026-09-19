@@ -70,7 +70,7 @@ class _PermissionOnboardingScreenState
             shape: BoxShape.circle,
           ),
           child: Icon(
-            Icons.alarm,
+            Icons.alarm_rounded,
             size: 40,
             color: colorScheme.primary,
           ),
@@ -105,7 +105,7 @@ class _PermissionOnboardingScreenState
           title: 'Notifikasi',
           description:
               'Terima pengingat saat jadwal kegiatan akan dimulai.',
-          icon: Icons.notifications_active,
+          icon: Icons.notifications_active_rounded,
           isGranted: permissionState.notificationGranted,
           isRequired: true,
           onRequest: () => _handleRequestNotification(),
@@ -114,7 +114,7 @@ class _PermissionOnboardingScreenState
           title: 'Alarm Tepat Waktu',
           description:
               'Alarm berbunyi tepat sesuai jadwal yang ditentukan.',
-          icon: Icons.access_alarm,
+          icon: Icons.alarm_rounded,
           isGranted: permissionState.exactAlarmGranted,
           isRequired: true,
           onRequest: () => _handleRequestExactAlarm(),
@@ -123,7 +123,7 @@ class _PermissionOnboardingScreenState
           title: 'Nonaktifkan Optimasi Baterai',
           description:
               'Alarm tetap berbunyi meskipun aplikasi di latar belakang.',
-          icon: Icons.battery_saver,
+          icon: Icons.battery_saver_rounded,
           isGranted: permissionState.batteryOptimizationGranted,
           isOptional: true,
           onRequest: () => _handleRequestBatteryOptimization(),

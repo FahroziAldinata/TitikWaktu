@@ -171,7 +171,7 @@ Map<String, dynamic> getPermissionRationale(AppPermission permission) {
             'saat jadwal kegiatan akan dimulai.',
         'featureImpact':
             'Tanpa izin ini, Anda tidak akan menerima pengingat apapun.',
-        'icon': Icons.notifications_active,
+        'icon': Icons.notifications_active_rounded,
       };
     case AppPermission.exactAlarm:
       return {
@@ -181,7 +181,7 @@ Map<String, dynamic> getPermissionRationale(AppPermission permission) {
             'agar pengingat berbunyi sesuai jadwal yang ditentukan.',
         'featureImpact':
             'Alarm mungkin tidak berbunyi tepat waktu atau terlambat.',
-        'icon': Icons.access_alarm,
+        'icon': Icons.alarm_rounded,
       };
     case AppPermission.batteryOptimization:
       return {
@@ -191,7 +191,7 @@ Map<String, dynamic> getPermissionRationale(AppPermission permission) {
             'agar alarm dapat berbunyi meskipun aplikasi berjalan di latar belakang.',
         'featureImpact':
             'Sistem bisa menghentikan alarm saat aplikasi dijeda oleh baterai.',
-        'icon': Icons.battery_saver,
+        'icon': Icons.battery_saver_rounded,
       };
     case AppPermission.ignoreBatteryOptimization:
       return {
@@ -201,7 +201,7 @@ Map<String, dynamic> getPermissionRationale(AppPermission permission) {
             'agar alarm dapat berbunyi meskipun aplikasi berjalan di latar belakang.',
         'featureImpact':
             'Sistem bisa menghentikan alarm saat aplikasi dijeda oleh baterai.',
-        'icon': Icons.battery_saver,
+        'icon': Icons.battery_saver_rounded,
       };
   }
 }
