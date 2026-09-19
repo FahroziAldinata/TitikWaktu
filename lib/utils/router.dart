@@ -1,6 +1,10 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:titik_waktu/database/database.dart';
+import 'package:titik_waktu/features/categories/screens/bulk_time_setter_screen.dart';
+import 'package:titik_waktu/features/categories/screens/category_calendar_picker_screen.dart';
+import 'package:titik_waktu/features/categories/screens/category_detail_screen.dart';
 import 'package:titik_waktu/features/categories/screens/manage_categories_screen.dart';
 import 'package:titik_waktu/features/onboarding/screens/permission_onboarding_screen.dart';
 import 'package:titik_waktu/features/permissions/screens/permission_management_screen.dart';
@@ -55,6 +59,33 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _buildSharedAxisPage(
         key: state.pageKey,
         child: const ManageCategoriesScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/categories/:id',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: CategoryDetailScreen(
+          categoryId: int.parse(state.pathParameters['id'] ?? '0'),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/categories/:id/calendar',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: CategoryCalendarPickerScreen(
+          category: state.extra as Category,
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/categories/:id/bulk-time',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: BulkTimeSetterScreen(
+          category: state.extra as Category,
+        ),
       ),
     ),
     GoRoute(

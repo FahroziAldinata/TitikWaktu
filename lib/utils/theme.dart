@@ -69,6 +69,10 @@ class AppTheme {
         width: 44,
         height: 44,
       ),
+      extendedSizeConstraints: BoxConstraints(
+        minHeight: 48,
+        minWidth: 48,
+      ),
     ),
     inputDecorationTheme: const InputDecorationTheme(
       filled: false,
@@ -185,6 +189,10 @@ class AppTheme {
       sizeConstraints: BoxConstraints.tightFor(
         width: 44,
         height: 44,
+      ),
+      extendedSizeConstraints: BoxConstraints(
+        minHeight: 48,
+        minWidth: 48,
       ),
     ),
     inputDecorationTheme: const InputDecorationTheme(

@@ -193,6 +193,9 @@ class ScheduleListNotifier extends StateNotifier<AsyncValue<List<Schedule>>> {
     await updateSchedule(updated);
   }
 
+  /// Reload schedules from DB — call this after bulk insert from an external flow
+  Future<void> reload() => _loadSchedules();
+
   Future<void> addExceptionDate(int scheduleId, DateTime date) async {
     final schedules = state.valueOrNull ?? [];
     final schedule = schedules.firstWhere((s) => s.id == scheduleId);

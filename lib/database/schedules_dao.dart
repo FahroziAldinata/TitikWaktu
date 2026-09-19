@@ -16,6 +16,14 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
   }
   Future<int> deleteSchedule(Insertable<Schedule> schedule) => delete(schedules).delete(schedule);
 
+  /// Get schedules filtered by category ID, sorted by time ascending
+  Future<List<Schedule>> getSchedulesByCategory(int categoryId) {
+    return (select(schedules)
+          ..where((tbl) => tbl.categoryId.equals(categoryId))
+          ..orderBy([(tbl) => OrderingTerm.asc(tbl.time)]))
+        .get();
+  }
+
   // --- History Logs Operations ---
   Future<List<HistoryLog>> getAllHistoryLogs() {
     final query = select(historyLogs)

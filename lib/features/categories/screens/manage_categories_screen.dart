@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
@@ -84,7 +85,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
                     size: 20,
                     color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                   ),
-                  onTap: () => _showCategoryDialog(context, ref, category: cat),
+                  onTap: () => context.push('/categories/${cat.id}'),
                 ),
               );
             },

@@ -88,6 +88,19 @@ class ScheduleRepository {
     }
   }
 
+  /// Get schedules filtered by category ID
+  Future<List<Schedule>> getSchedulesByCategory(int categoryId) async {
+    try {
+      _logger.i('Getting schedules for category: $categoryId');
+      final schedules = await _dao.getSchedulesByCategory(categoryId);
+      _logger.i('Retrieved ${schedules.length} schedules for category $categoryId');
+      return schedules;
+    } catch (e, stackTrace) {
+      _logger.e('Failed to get schedules by category', error: e, stackTrace: stackTrace);
+      rethrow;
+    }
+  }
+
   /// Get active schedules only
   Future<List<Schedule>> getActiveSchedules() async {
     try {
