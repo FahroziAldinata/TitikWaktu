@@ -1278,8 +1278,14 @@ class $CategoriesTable extends Categories
   late final GeneratedColumn<String> colorHex = GeneratedColumn<String>(
       'color_hex', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _ringtoneUriMeta =
+      const VerificationMeta('ringtoneUri');
   @override
-  List<GeneratedColumn> get $columns => [id, name, colorHex];
+  late final GeneratedColumn<String> ringtoneUri = GeneratedColumn<String>(
+      'ringtone_uri', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, colorHex, ringtoneUri];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1305,6 +1311,12 @@ class $CategoriesTable extends Categories
     } else if (isInserting) {
       context.missing(_colorHexMeta);
     }
+    if (data.containsKey('ringtone_uri')) {
+      context.handle(
+          _ringtoneUriMeta,
+          ringtoneUri.isAcceptableOrUnknown(
+              data['ringtone_uri']!, _ringtoneUriMeta));
+    }
     return context;
   }
 
@@ -1320,6 +1332,8 @@ class $CategoriesTable extends Categories
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       colorHex: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}color_hex'])!,
+      ringtoneUri: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ringtone_uri']),
     );
   }
 
@@ -1333,14 +1347,21 @@ class Category extends DataClass implements Insertable<Category> {
   final int id;
   final String name;
   final String colorHex;
+  final String? ringtoneUri;
   const Category(
-      {required this.id, required this.name, required this.colorHex});
+      {required this.id,
+      required this.name,
+      required this.colorHex,
+      this.ringtoneUri});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['color_hex'] = Variable<String>(colorHex);
+    if (!nullToAbsent || ringtoneUri != null) {
+      map['ringtone_uri'] = Variable<String>(ringtoneUri);
+    }
     return map;
   }
 
@@ -1349,6 +1370,9 @@ class Category extends DataClass implements Insertable<Category> {
       id: Value(id),
       name: Value(name),
       colorHex: Value(colorHex),
+      ringtoneUri: ringtoneUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ringtoneUri),
     );
   }
 
@@ -1359,6 +1383,7 @@ class Category extends DataClass implements Insertable<Category> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       colorHex: serializer.fromJson<String>(json['colorHex']),
+      ringtoneUri: serializer.fromJson<String?>(json['ringtoneUri']),
     );
   }
   @override
@@ -1368,19 +1393,28 @@ class Category extends DataClass implements Insertable<Category> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'colorHex': serializer.toJson<String>(colorHex),
+      'ringtoneUri': serializer.toJson<String?>(ringtoneUri),
     };
   }
 
-  Category copyWith({int? id, String? name, String? colorHex}) => Category(
+  Category copyWith(
+          {int? id,
+          String? name,
+          String? colorHex,
+          Value<String?> ringtoneUri = const Value.absent()}) =>
+      Category(
         id: id ?? this.id,
         name: name ?? this.name,
         colorHex: colorHex ?? this.colorHex,
+        ringtoneUri: ringtoneUri.present ? ringtoneUri.value : this.ringtoneUri,
       );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+      ringtoneUri:
+          data.ringtoneUri.present ? data.ringtoneUri.value : this.ringtoneUri,
     );
   }
 
@@ -1389,55 +1423,66 @@ class Category extends DataClass implements Insertable<Category> {
     return (StringBuffer('Category(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('colorHex: $colorHex')
+          ..write('colorHex: $colorHex, ')
+          ..write('ringtoneUri: $ringtoneUri')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, colorHex);
+  int get hashCode => Object.hash(id, name, colorHex, ringtoneUri);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Category &&
           other.id == this.id &&
           other.name == this.name &&
-          other.colorHex == this.colorHex);
+          other.colorHex == this.colorHex &&
+          other.ringtoneUri == this.ringtoneUri);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<int> id;
   final Value<String> name;
   final Value<String> colorHex;
+  final Value<String?> ringtoneUri;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.colorHex = const Value.absent(),
+    this.ringtoneUri = const Value.absent(),
   });
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required String colorHex,
+    this.ringtoneUri = const Value.absent(),
   })  : name = Value(name),
         colorHex = Value(colorHex);
   static Insertable<Category> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? colorHex,
+    Expression<String>? ringtoneUri,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (colorHex != null) 'color_hex': colorHex,
+      if (ringtoneUri != null) 'ringtone_uri': ringtoneUri,
     });
   }
 
   CategoriesCompanion copyWith(
-      {Value<int>? id, Value<String>? name, Value<String>? colorHex}) {
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String>? colorHex,
+      Value<String?>? ringtoneUri}) {
     return CategoriesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       colorHex: colorHex ?? this.colorHex,
+      ringtoneUri: ringtoneUri ?? this.ringtoneUri,
     );
   }
 
@@ -1453,6 +1498,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (colorHex.present) {
       map['color_hex'] = Variable<String>(colorHex.value);
     }
+    if (ringtoneUri.present) {
+      map['ringtone_uri'] = Variable<String>(ringtoneUri.value);
+    }
     return map;
   }
 
@@ -1461,7 +1509,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     return (StringBuffer('CategoriesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('colorHex: $colorHex')
+          ..write('colorHex: $colorHex, ')
+          ..write('ringtoneUri: $ringtoneUri')
           ..write(')'))
         .toString();
   }
@@ -2043,11 +2092,13 @@ typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   Value<int> id,
   required String name,
   required String colorHex,
+  Value<String?> ringtoneUri,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<String> colorHex,
+  Value<String?> ringtoneUri,
 });
 
 class $$CategoriesTableFilterComposer
@@ -2067,6 +2118,9 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<String> get colorHex => $composableBuilder(
       column: $table.colorHex, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ringtoneUri => $composableBuilder(
+      column: $table.ringtoneUri, builder: (column) => ColumnFilters(column));
 }
 
 class $$CategoriesTableOrderingComposer
@@ -2086,6 +2140,9 @@ class $$CategoriesTableOrderingComposer
 
   ColumnOrderings<String> get colorHex => $composableBuilder(
       column: $table.colorHex, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ringtoneUri => $composableBuilder(
+      column: $table.ringtoneUri, builder: (column) => ColumnOrderings(column));
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -2105,6 +2162,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<String> get colorHex =>
       $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  GeneratedColumn<String> get ringtoneUri => $composableBuilder(
+      column: $table.ringtoneUri, builder: (column) => column);
 }
 
 class $$CategoriesTableTableManager extends RootTableManager<
@@ -2133,21 +2193,25 @@ class $$CategoriesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> colorHex = const Value.absent(),
+            Value<String?> ringtoneUri = const Value.absent(),
           }) =>
               CategoriesCompanion(
             id: id,
             name: name,
             colorHex: colorHex,
+            ringtoneUri: ringtoneUri,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required String colorHex,
+            Value<String?> ringtoneUri = const Value.absent(),
           }) =>
               CategoriesCompanion.insert(
             id: id,
             name: name,
             colorHex: colorHex,
+            ringtoneUri: ringtoneUri,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

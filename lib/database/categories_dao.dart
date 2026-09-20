@@ -22,7 +22,10 @@ class CategoriesDao extends DatabaseAccessor<AppDatabase> with _$CategoriesDaoMi
   Future<int> insertCategory(CategoriesCompanion category) => into(categories).insert(category);
 
   /// Update existing category
-  Future<bool> updateCategory(CategoriesCompanion category) => update(categories).replace(category);
+  Future<bool> updateCategory(CategoriesCompanion category) =>
+      (update(categories)..where((tbl) => tbl.id.equals(category.id.value)))
+          .write(category)
+          .then((count) => count > 0);
 
   /// Delete category by ID
   Future<int> deleteCategory(int id) => (delete(categories)..where((tbl) => tbl.id.equals(id))).go();

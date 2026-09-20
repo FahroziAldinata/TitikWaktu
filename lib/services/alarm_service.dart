@@ -7,6 +7,7 @@ import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
 import 'package:titik_waktu/services/permission_service.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AlarmService {
   static final AlarmService _instance = AlarmService._internal();
@@ -68,7 +69,7 @@ class AlarmService {
     return null;
   }
 
-  Future<bool> scheduleAlarm(Schedule schedule) async {
+  Future<bool> scheduleAlarm(Schedule schedule, {String? ringtoneUri}) async {
     if (!schedule.isActive) return false;
 
     final hasPermissions = await _checkRequiredPermissions(schedule);
@@ -101,8 +102,9 @@ class AlarmService {
     final isFullAlarm = schedule.notificationType == NotificationType.fullAlarm.value;
 
     if (isFullAlarm) {
+      final resolvedRingtoneUri = ringtoneUri ?? await resolveRingtoneUri(schedule);
       // Use native AlarmManager with looping ForegroundService and WakeLock
-      return await _scheduleNativeAlarm(schedule, scheduledTime);
+      return await _scheduleNativeAlarm(schedule, scheduledTime, ringtoneUri: resolvedRingtoneUri);
     } else {
       // Use standard local notification
       final notificationDetails = NotificationDetails(
@@ -134,14 +136,46 @@ class AlarmService {
     }
   }
 
+  /// Tentukan ringtone URI sesuai prioritas:
+  /// 1. Kategori spesifik (jika diset)
+  /// 2. Default global dari SharedPreferences
+  /// 3. null (fallback native ke RingtoneManager.getDefaultUri(TYPE_ALARM))
+  Future<String?> resolveRingtoneUri(Schedule schedule) async {
+    if (schedule.categoryId != null) {
+      try {
+        final db = AppDatabase();
+        final category = await db.categoriesDao.getCategoryById(schedule.categoryId!);
+        if (category?.ringtoneUri != null && category!.ringtoneUri!.isNotEmpty) {
+          return category.ringtoneUri;
+        }
+      } catch (e) {
+        debugPrint('Error resolving category ringtone: $e');
+      }
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final defaultUri = prefs.getString('default_ringtone_uri');
+      if (defaultUri != null && defaultUri.isNotEmpty) {
+        return defaultUri;
+      }
+    } catch (e) {
+      debugPrint('Error resolving default ringtone: $e');
+    }
+
+    return null;
+  }
+
   Future<bool> _scheduleNativeAlarm(
-      Schedule schedule, DateTime scheduledTime) async {
+      Schedule schedule, DateTime scheduledTime, {String? ringtoneUri}) async {
     try {
       await _nativeAlarmChannel.invokeMethod('scheduleAlarm', {
         'scheduleId': schedule.id.toString(),
         'triggerTimeMillis': scheduledTime.millisecondsSinceEpoch,
         'title': schedule.title,
         'description': schedule.description ?? 'Waktunya kegiatan!',
+        if (ringtoneUri != null && ringtoneUri.isNotEmpty)
+          'ringtoneUri': ringtoneUri,
       });
       return true;
     } on PlatformException catch (e) {

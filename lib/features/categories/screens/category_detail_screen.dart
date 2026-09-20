@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,8 +7,10 @@ import 'package:titik_waktu/providers/bulk_schedule_provider.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:titik_waktu/services/ringtone_service.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
+import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
 class CategoryDetailScreen extends ConsumerWidget {
@@ -291,6 +294,8 @@ class _CategoryEditSheet extends ConsumerStatefulWidget {
 class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
   final _nameController = TextEditingController();
   late String _selectedHex;
+  String? _selectedRingtoneUri;
+  String? _selectedRingtoneTitle;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -298,6 +303,38 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
     super.initState();
     _nameController.text = widget.category.name;
     _selectedHex = widget.category.colorHex;
+    _selectedRingtoneUri = widget.category.ringtoneUri;
+    if (_selectedRingtoneUri != null && _selectedRingtoneUri!.isNotEmpty) {
+      _loadRingtoneTitle(_selectedRingtoneUri!);
+    }
+  }
+
+  Future<void> _loadRingtoneTitle(String uri) async {
+    final title = await RingtoneService().getRingtoneTitle(uri);
+    if (mounted) {
+      setState(() => _selectedRingtoneTitle = title);
+    }
+  }
+
+  Future<void> _openRingtonePicker() async {
+    final result = await showRingtonePickerSheet(
+      context,
+      currentUri: _selectedRingtoneUri,
+      currentTitle: _selectedRingtoneTitle,
+      showReset: true,
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        if (result.isReset) {
+          _selectedRingtoneUri = null;
+          _selectedRingtoneTitle = null;
+        } else {
+          _selectedRingtoneUri = result.uri;
+          _selectedRingtoneTitle = result.title;
+        }
+      });
+    }
   }
 
   @override
@@ -379,6 +416,58 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 20),
+            Text(
+              'Ringtone Alarm (Opsional)',
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            Material(
+              color: isDark ? const Color(0xFF22242B) : const Color(0xFFF4F6F9),
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                onTap: _openRingtonePicker,
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _selectedRingtoneUri != null
+                            ? Icons.music_note_rounded
+                            : Icons.notifications_none_rounded,
+                        color: _selectedRingtoneUri != null
+                            ? AppColors.accentAmber
+                            : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _selectedRingtoneUri != null
+                              ? (_selectedRingtoneTitle ?? 'Ringtone Kustom')
+                              : 'Pakai Ringtone Default',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: _selectedRingtoneUri != null
+                                ? (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)
+                                : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                            fontWeight: _selectedRingtoneUri != null ? FontWeight.w500 : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 18,
+                        color: isDark ? Colors.white38 : Colors.black26,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 28),
             Row(
               children: [
@@ -438,6 +527,7 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
         id: widget.category.id,
         name: _nameController.text.trim(),
         colorHex: _selectedHex,
+        ringtoneUri: Value(_selectedRingtoneUri),
       );
       if (mounted) Navigator.pop(context);
     }

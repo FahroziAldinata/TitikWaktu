@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:titik_waktu/providers/ringtone_provider.dart';
 import 'package:titik_waktu/providers/theme_provider.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
+import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -35,6 +37,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final themeMode = ref.watch(themeProvider);
+    final defaultRingtone = ref.watch(defaultRingtoneProvider);
 
     final surfaceBg = isDark ? AppColors.darkBackground : AppColors.lightBackground;
     final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
@@ -84,7 +87,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
-          // ── Section 3: Tampilan ───────────────────────────────────────
+          // ── Section 3: Ringtone Default ───────────────────────────────
+          _buildSectionHeader('Suara & Ringtone', textMuted),
+          const SizedBox(height: 8),
+          _buildSettingsCard(
+            isDark: isDark,
+            cardBg: cardBg,
+            borderColor: borderColor,
+            children: [
+              _buildRingtoneItem(
+                context,
+                defaultRingtone: defaultRingtone,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+                isDark: isDark,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── Section 4: Tampilan ───────────────────────────────────────
           _buildSectionHeader('Tampilan', textMuted),
           const SizedBox(height: 8),
           _buildSettingsCard(
@@ -233,6 +256,82 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
+    );
+  }
+
+  // ── Ringtone List Item ──────────────────────────────────────────────────
+  Widget _buildRingtoneItem(
+    BuildContext context, {
+    required RingtoneData defaultRingtone,
+    required Color textPrimary,
+    required Color textMuted,
+    required bool isDark,
+  }) {
+    final hasCustom = defaultRingtone.isSet;
+    final displayTitle = defaultRingtone.title ?? (hasCustom ? 'Ringtone Kustom' : 'Default Sistem Android');
+
+    return InkWell(
+      onTap: () async {
+        final result = await showRingtonePickerSheet(
+          context,
+          currentUri: defaultRingtone.uri,
+          currentTitle: defaultRingtone.title,
+          showReset: true,
+        );
+
+        if (result != null) {
+          final notifier = ref.read(defaultRingtoneProvider.notifier);
+          if (result.isReset) {
+            await notifier.reset();
+          } else {
+            await notifier.setRingtone(result.uri, result.title);
+          }
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(
+              hasCustom ? Icons.music_note_rounded : Icons.notifications_active_outlined,
+              size: 20,
+              color: hasCustom ? AppColors.accentAmber : textPrimary,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ringtone Default Alarm',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    displayTitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: hasCustom ? AppColors.accentAmber : textMuted,
+                      fontWeight: hasCustom ? FontWeight.w500 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: textMuted,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -6,6 +6,7 @@ class AppColors {
   // --- Light Mode ---
   static const lightBackground = Color(0xFFFAFAF9);
   static const lightSurface = Color(0xFFFFFFFF);
+  static const lightCard = lightSurface;
   static const lightBorder = Color(0xFFE5E4E1);
   static const lightTextPrimary = Color(0xFF1C1C1A);
   static const lightTextSecondary = Color(0xFF8A8985);
@@ -13,9 +14,12 @@ class AppColors {
   // --- Dark Mode ---
   static const darkBackground = Color(0xFF151412);
   static const darkSurface = Color(0xFF1C1B18);
+  static const darkCard = darkSurface;
   static const darkBorder = Color(0xFF33322D);
   static const darkTextPrimary = Color(0xFFF0EFEA);
   static const darkTextSecondary = Color(0xFF8A8985);
+
+  static const accentAmber = categoryAmber;
 
   // --- Amber Accent (Khusus Alarm / Waktu) ---
   // Light Mode Amber

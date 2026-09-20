@@ -14,6 +14,7 @@ class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get colorHex => text()();
+  TextColumn get ringtoneUri => text().nullable()();
 }
 
 @DataClassName('Schedule')

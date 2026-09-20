@@ -16,13 +16,17 @@ class AlarmReceiver : BroadcastReceiver() {
         }
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Alarm"
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: ""
+        val ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI)
         
-        Log.i("AlarmReceiver", "🔥 onReceive: Triggering Alarm for schedule #$scheduleId: '$title'")
+        Log.i("AlarmReceiver", "🔥 onReceive: Triggering Alarm for schedule #$scheduleId: '$title', ringtone: $ringtoneUri")
         
         val serviceIntent = Intent(context, AlarmForegroundService::class.java).apply {
             putExtra(EXTRA_SCHEDULE_ID, scheduleId)
             putExtra(EXTRA_TITLE, title)
             putExtra(EXTRA_DESCRIPTION, description)
+            if (!ringtoneUri.isNullOrEmpty()) {
+                putExtra(EXTRA_RINGTONE_URI, ringtoneUri)
+            }
         }
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -36,5 +40,6 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_SCHEDULE_ID = "schedule_id"
         const val EXTRA_TITLE = "title"
         const val EXTRA_DESCRIPTION = "description"
+        const val EXTRA_RINGTONE_URI = "ringtone_uri"
     }
 }

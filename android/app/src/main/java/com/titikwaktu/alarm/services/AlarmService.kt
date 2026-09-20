@@ -18,14 +18,18 @@ class AlarmService(private val context: Context) {
         scheduleId: String,
         triggerTimeMillis: Long,
         title: String,
-        description: String
+        description: String,
+        ringtoneUri: String? = null
     ) {
-        Log.i("NativeAlarmService", "⏰ scheduleAlarm called for schedule #$scheduleId at $triggerTimeMillis ('$title')")
+        Log.i("NativeAlarmService", "⏰ scheduleAlarm called for schedule #$scheduleId at $triggerTimeMillis ('$title', ringtone: $ringtoneUri)")
         
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra(AlarmReceiver.EXTRA_SCHEDULE_ID, scheduleId)
             putExtra(AlarmReceiver.EXTRA_TITLE, title)
             putExtra(AlarmReceiver.EXTRA_DESCRIPTION, description)
+            if (!ringtoneUri.isNullOrEmpty()) {
+                putExtra(AlarmReceiver.EXTRA_RINGTONE_URI, ringtoneUri)
+            }
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -88,11 +92,12 @@ class AlarmService(private val context: Context) {
             val timeMillis = schedule["timeMillis"] as? Long ?: continue
             val title = schedule["title"] as? String ?: ""
             val description = schedule["description"] as? String ?: ""
+            val ringtoneUri = schedule["ringtoneUri"] as? String
             val isActive = schedule["isActive"] as? Boolean ?: true
             
             if (isActive) {
                 if (timeMillis > System.currentTimeMillis()) {
-                    scheduleAlarm(id, timeMillis, title, description)
+                    scheduleAlarm(id, timeMillis, title, description, ringtoneUri)
                 }
             }
         }

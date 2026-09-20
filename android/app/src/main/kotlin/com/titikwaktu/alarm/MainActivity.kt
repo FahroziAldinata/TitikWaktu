@@ -2,18 +2,21 @@ package com.titikwaktu.alarm
 
 import android.app.AlarmManager
 import android.content.Intent
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import io.flutter.embedding.android.FlutterActivity
+import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 import io.flutter.embedding.engine.FlutterEngineCache
 import com.titikwaktu.alarm.services.AlarmService
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
     companion object {
         private const val CHANNEL = "com.titikwaktu.alarm/battery_optimization"
@@ -30,9 +33,43 @@ class MainActivity : FlutterActivity() {
         private const val METHOD_SCHEDULE_ALARM = "scheduleAlarm"
         private const val METHOD_CANCEL_ALARM = "cancelAlarm"
         private const val METHOD_RESCHEDULE_ALL = "rescheduleAllAlarms"
+
+        private const val RINGTONE_PICKER_CHANNEL = "com.titikwaktu.alarm/ringtone_picker"
+        private const val METHOD_PICK_SYSTEM_RINGTONE = "pickSystemRingtone"
+        private const val METHOD_TAKE_PERSISTABLE_URI_PERMISSION = "takePersistableUriPermission"
+        private const val METHOD_GET_RINGTONE_TITLE = "getRingtoneTitle"
     }
 
     private val alarmService by lazy { AlarmService(this) }
+    private var pendingRingtoneResult: MethodChannel.Result? = null
+
+    private val ringtonePickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { activityResult ->
+        val data = activityResult.data
+        val pickedUri: Uri? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        }
+
+        if (pickedUri != null) {
+            val title = try {
+                val ringtone = RingtoneManager.getRingtone(this, pickedUri)
+                ringtone?.getTitle(this) ?: pickedUri.lastPathSegment ?: "Ringtone"
+            } catch (e: Exception) {
+                pickedUri.lastPathSegment ?: "Ringtone"
+            }
+            pendingRingtoneResult?.success(mapOf(
+                "uri" to pickedUri.toString(),
+                "title" to title
+            ))
+        } else {
+            pendingRingtoneResult?.success(null)
+        }
+        pendingRingtoneResult = null
+    }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,9 +143,10 @@ class MainActivity : FlutterActivity() {
                     val triggerTimeMillis = (call.argument<Number>("triggerTimeMillis"))?.toLong() ?: 0L
                     val title = call.argument<String>("title") ?: "Alarm"
                     val description = call.argument<String>("description") ?: ""
+                    val ringtoneUri = call.argument<String>("ringtoneUri")
                     
                     if (scheduleId.isNotEmpty() && triggerTimeMillis > 0L) {
-                        alarmService.scheduleAlarm(scheduleId, triggerTimeMillis, title, description)
+                        alarmService.scheduleAlarm(scheduleId, triggerTimeMillis, title, description, ringtoneUri)
                         result.success(true)
                     } else {
                         result.error("INVALID_ARGS", "Missing scheduleId or triggerTimeMillis", null)
@@ -127,6 +165,59 @@ class MainActivity : FlutterActivity() {
                     val schedules = call.argument<List<Map<String, Any>>>("schedules") ?: emptyList()
                     alarmService.rescheduleAllAlarms(schedules)
                     result.success(true)
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            RINGTONE_PICKER_CHANNEL
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                METHOD_PICK_SYSTEM_RINGTONE -> {
+                    val currentUriStr = call.argument<String>("currentUri")
+                    val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                        putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                        if (!currentUriStr.isNullOrEmpty()) {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(currentUriStr))
+                        }
+                    }
+                    pendingRingtoneResult = result
+                    ringtonePickerLauncher.launch(intent)
+                }
+                METHOD_TAKE_PERSISTABLE_URI_PERMISSION -> {
+                    val uriStr = call.argument<String>("uri")
+                    if (!uriStr.isNullOrEmpty()) {
+                        try {
+                            val uri = Uri.parse(uriStr)
+                            val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            contentResolver.takePersistableUriPermission(uri, takeFlags)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            Log.e("MainActivity", "Failed to take persistable URI permission: ${e.message}", e)
+                            result.error("PERMISSION_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_ARGS", "Missing URI", null)
+                    }
+                }
+                METHOD_GET_RINGTONE_TITLE -> {
+                    val uriStr = call.argument<String>("uri")
+                    if (!uriStr.isNullOrEmpty()) {
+                        try {
+                            val uri = Uri.parse(uriStr)
+                            val ringtone = RingtoneManager.getRingtone(this, uri)
+                            val title = ringtone?.getTitle(this) ?: uri.lastPathSegment ?: "Ringtone"
+                            result.success(title)
+                        } catch (e: Exception) {
+                            result.success(null)
+                        }
+                    } else {
+                        result.success(null)
+                    }
                 }
                 else -> result.notImplemented()
             }

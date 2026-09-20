@@ -39,8 +39,9 @@ class AlarmForegroundService : Service() {
         val scheduleId = intent?.getStringExtra(EXTRA_SCHEDULE_ID) ?: return START_NOT_STICKY
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "Alarm"
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: ""
+        val ringtoneUri = intent.getStringExtra(EXTRA_RINGTONE_URI)
         
-        Log.i("AlarmForegroundService", "🔔 onStartCommand: Alarm triggered: '$title' (ID: $scheduleId)")
+        Log.i("AlarmForegroundService", "🔔 onStartCommand: Alarm triggered: '$title' (ID: $scheduleId, ringtone: $ringtoneUri)")
 
         if (intent.getBooleanExtra(ACTION_DISMISS, false)) {
             Log.i("AlarmForegroundService", "ACTION_DISMISS received: stopping alarm")
@@ -53,7 +54,7 @@ class AlarmForegroundService : Service() {
         val notification = createNotification(scheduleId, title, description)
         startForeground(NOTIFICATION_ID, notification)
         
-        startAlarmSound()
+        startAlarmSound(ringtoneUri)
         
         return START_STICKY
     }
@@ -132,31 +133,44 @@ class AlarmForegroundService : Service() {
             .build()
     }
     
-    private fun startAlarmSound() {
+    private fun startAlarmSound(ringtoneUriString: String?) {
         try {
             val audioAttributes = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
             
-            val resourceId = resources.getIdentifier("default_alarm", "raw", packageName)
-            if (resourceId != 0) {
-                mediaPlayer = MediaPlayer.create(this, resourceId).apply {
-                    setAudioAttributes(audioAttributes)
-                    isLooping = true
-                    start()
+            var playerCreated = false
+            if (!ringtoneUriString.isNullOrEmpty()) {
+                try {
+                    val uri = Uri.parse(ringtoneUriString)
+                    Log.i("AlarmForegroundService", "Attempting to play custom ringtone: $uri")
+                    mediaPlayer = MediaPlayer.create(this, uri)?.apply {
+                        setAudioAttributes(audioAttributes)
+                        isLooping = true
+                        start()
+                    }
+                    if (mediaPlayer != null) {
+                        playerCreated = true
+                        Log.i("AlarmForegroundService", "Custom ringtone started playing")
+                    }
+                } catch (e: Exception) {
+                    Log.e("AlarmForegroundService", "Failed to play custom ringtone: ${e.message}, falling back to default", e)
                 }
-            } else {
+            }
+
+            if (!playerCreated) {
                 val alarmUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                mediaPlayer = MediaPlayer.create(this, alarmUri).apply {
+                Log.i("AlarmForegroundService", "Playing default system alarm: $alarmUri")
+                mediaPlayer = MediaPlayer.create(this, alarmUri)?.apply {
                     setAudioAttributes(audioAttributes)
                     isLooping = true
                     start()
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("AlarmForegroundService", "Error in startAlarmSound: ${e.message}", e)
         }
     }
     
@@ -195,6 +209,7 @@ class AlarmForegroundService : Service() {
         const val EXTRA_SCHEDULE_ID = "schedule_id"
         const val EXTRA_TITLE = "title"
         const val EXTRA_DESCRIPTION = "description"
+        const val EXTRA_RINGTONE_URI = "ringtone_uri"
         const val ACTION_DISMISS = "action_dismiss"
         const val MAX_ALARM_DURATION_MS = 30 * 60 * 1000L // 30 minutes
     }

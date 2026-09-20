@@ -20,11 +20,13 @@ class CategoryRepository {
   Future<int> createCategory({
     required String name,
     required String colorHex,
+    String? ringtoneUri,
   }) {
     return _dao.insertCategory(
       CategoriesCompanion(
         name: Value(name),
         colorHex: Value(colorHex),
+        ringtoneUri: Value(ringtoneUri),
       ),
     );
   }
@@ -34,12 +36,14 @@ class CategoryRepository {
     required int id,
     required String name,
     required String colorHex,
+    Value<String?> ringtoneUri = const Value.absent(),
   }) {
     return _dao.updateCategory(
       CategoriesCompanion(
         id: Value(id),
         name: Value(name),
         colorHex: Value(colorHex),
+        ringtoneUri: ringtoneUri,
       ),
     );
   }
