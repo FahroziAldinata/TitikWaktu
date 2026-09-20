@@ -17,33 +17,34 @@ ThemeMode _intToThemeMode(int? value) => switch (value) {
       _ => ThemeMode.system, // default / null / unknown → system
     };
 
+/// Provider SharedPreferences yang di-override di main() via ProviderScope.
+/// Dengan ini tidak ada async gap antara startup dan pembacaan tema.
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError(
+    'sharedPreferencesProvider harus di-override di ProviderScope '
+    'sebelum runApp() dipanggil.',
+  );
+});
+
 /// Provider untuk tema aplikasi.
-/// State awal: [ThemeMode.system].
-/// Setelah [_init()] selesai, state diperbarui dari SharedPreferences.
+/// State awal langsung dibaca dari SharedPreferences yang sudah tersedia —
+/// TIDAK ada race condition karena prefs sudah di-inject synchronously.
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>(
-  (ref) => ThemeNotifier(),
+  (ref) => ThemeNotifier(ref.read(sharedPreferencesProvider)),
 );
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
-  ThemeNotifier() : super(ThemeMode.system) {
-    _init();
-  }
+  final SharedPreferences _prefs;
 
-  /// Baca nilai yang tersimpan dari SharedPreferences saat startup.
-  Future<void> _init() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getInt(_kThemeModeKey);
-    // Hanya update jika mounted (widget masih hidup)
-    if (mounted) {
-      state = _intToThemeMode(saved);
-    }
-  }
+  ThemeNotifier(this._prefs)
+      : super(_intToThemeMode(_prefs.getInt(_kThemeModeKey)));
+  // ↑ State awal dibaca SYNCHRONOUSLY dari prefs yang sudah ter-init.
+  //   Tidak ada async, tidak ada _init(), tidak ada frame pertama yang "salah tema".
 
   /// Simpan [mode] ke SharedPreferences lalu update state.
   Future<void> setMode(ThemeMode mode) async {
     state = mode;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kThemeModeKey, _themeModeToInt(mode));
+    await _prefs.setInt(_kThemeModeKey, _themeModeToInt(mode));
   }
 
   /// Cycle: system → light → dark → system, dengan persistensi.
