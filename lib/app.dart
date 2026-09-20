@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:titik_waktu/providers/permission_provider.dart';
+import 'package:titik_waktu/providers/theme_provider.dart';
 import 'package:titik_waktu/utils/theme.dart';
 import 'package:titik_waktu/utils/router.dart';
 
@@ -17,6 +18,7 @@ class _TitikWaktuAppState extends ConsumerState<TitikWaktuApp> {
   @override
   Widget build(BuildContext context) {
     final permissionState = ref.watch(permissionProvider);
+    final themeMode = ref.watch(themeProvider);
 
     if (!permissionState.isLoading && !_initialRouteChecked) {
       _initialRouteChecked = true;
@@ -32,7 +34,7 @@ class _TitikWaktuAppState extends ConsumerState<TitikWaktuApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       routerConfig: appRouter,
     );
   }
