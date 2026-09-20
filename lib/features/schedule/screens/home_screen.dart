@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
+import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -70,15 +72,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             return _buildEmptyState(context, isDark);
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-            itemCount: schedules.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final schedule = schedules[index];
-              final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
-              return _buildScheduleCard(context, schedule, category, isDark);
-            },
+          return SlidableAutoCloseBehavior(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              itemCount: schedules.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final schedule = schedules[index];
+                final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
+                return ScheduleSlidable(
+                  schedule: schedule,
+                  child: _buildScheduleCard(context, schedule, category, isDark),
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

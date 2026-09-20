@@ -6,9 +6,11 @@ import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/models/schedule_enums.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
 import 'package:titik_waktu/utils/recurrence_helper.dart';
+import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
 class MonthlyCalendarScreen extends ConsumerStatefulWidget {
   const MonthlyCalendarScreen({super.key});
@@ -360,19 +362,22 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                     ],
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: occurringSchedules.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final item = occurringSchedules[index];
-                    final schedule = item.key;
-                    final occ = item.value;
-                    final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
-                    final scheduleColor = _getScheduleColor(schedule, categoryMap);
-                    final timeStr = AppDateFormatter.formatTime(occ.actualDateTime);
+              : SlidableAutoCloseBehavior(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: occurringSchedules.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final item = occurringSchedules[index];
+                      final schedule = item.key;
+                      final occ = item.value;
+                      final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
+                      final scheduleColor = _getScheduleColor(schedule, categoryMap);
+                      final timeStr = AppDateFormatter.formatTime(occ.actualDateTime);
 
-                    return Container(
+                      return ScheduleSlidable(
+                        schedule: schedule,
+                        child: Container(
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
                         borderRadius: BorderRadius.circular(12),
@@ -469,11 +474,13 @@ class _MonthlyCalendarScreenState extends ConsumerState<MonthlyCalendarScreen> {
                       ),
                     ],
                   ),
-                );
-              },
                 ),
+              );
+            },
+          ),
         ),
-      ],
+      ),
+    ],
     );
   }
 }

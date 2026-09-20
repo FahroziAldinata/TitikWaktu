@@ -5,8 +5,10 @@ import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/bulk_schedule_provider.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
+import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
 class CategoryDetailScreen extends ConsumerWidget {
   final int categoryId;
@@ -137,70 +139,84 @@ class CategoryDetailScreen extends ConsumerWidget {
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: schedules.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              final s = schedules[index];
-              final dateStr = AppDateFormatter.formatFullDate(s.startDate ?? s.time);
-              final timeStr = AppDateFormatter.formatTime(s.time);
-              final isActive = s.isActive;
-              final effectiveCatColor = isActive ? catColor : catColor.withValues(alpha: 0.35);
-              final effectiveTitleColor = isActive
-                  ? null
-                  : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.7) : AppColors.lightTextSecondary.withValues(alpha: 0.7));
-              final effectiveSubtitle = isActive ? dateStr : '$dateStr • Nonaktif';
+          return SlidableAutoCloseBehavior(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: schedules.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final s = schedules[index];
+                final dateStr = AppDateFormatter.formatFullDate(s.startDate ?? s.time);
+                final timeStr = AppDateFormatter.formatTime(s.time);
+                final isActive = s.isActive;
+                final effectiveCatColor = isActive ? catColor : catColor.withValues(alpha: 0.35);
+                final effectiveTitleColor = isActive
+                    ? null
+                    : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.7) : AppColors.lightTextSecondary.withValues(alpha: 0.7));
+                final effectiveSubtitle = isActive ? dateStr : '$dateStr • Nonaktif';
 
-              return Card(
-                child: ListTile(
-                  onTap: () => context.push('/schedule/${s.id}'),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  leading: Container(
-                    width: 4,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: effectiveCatColor,
-                      borderRadius: BorderRadius.circular(2),
+                return ScheduleSlidable(
+                  schedule: s,
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        width: 0.5,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    s.title,
-                    style: theme.textTheme.titleSmall?.copyWith(color: effectiveTitleColor),
-                  ),
-                  subtitle: Text(
-                    effectiveSubtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: isActive ? null : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.5) : AppColors.lightTextSecondary.withValues(alpha: 0.6)),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        timeStr,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'monospace',
-                          color: isActive
-                              ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
-                              : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7)),
+                    child: ListTile(
+                      onTap: () => context.push('/schedule/${s.id}'),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                      leading: Container(
+                        width: 4,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: effectiveCatColor,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: isActive,
-                        activeThumbColor: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                        onChanged: (val) {
-                          ref.read(scheduleListProvider.notifier).toggleSchedule(s.id);
-                        },
+                      title: Text(
+                        s.title,
+                        style: theme.textTheme.titleSmall?.copyWith(color: effectiveTitleColor),
                       ),
-                    ],
+                      subtitle: Text(
+                        effectiveSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isActive ? null : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.5) : AppColors.lightTextSecondary.withValues(alpha: 0.6)),
+                        ),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            timeStr,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontFamily: 'monospace',
+                              color: isActive
+                                  ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                                  : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Switch(
+                            value: isActive,
+                            activeThumbColor: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            onChanged: (val) {
+                              ref.read(scheduleListProvider.notifier).toggleSchedule(s.id);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
