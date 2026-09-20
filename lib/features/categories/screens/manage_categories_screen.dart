@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
+import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 
 class ManageCategoriesScreen extends ConsumerWidget {
@@ -11,6 +13,8 @@ class ManageCategoriesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoryListProvider);
+    final scheduleCounts = ref.watch(categoryScheduleCountProvider);
+    final upcomingDatesAsync = ref.watch(categoryUpcomingDatesProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -65,27 +69,147 @@ class ManageCategoriesScreen extends ConsumerWidget {
               final cat = categories[index];
               final catColor = AppColors.parseCategoryColor(cat.colorHex);
 
+              final count = scheduleCounts[cat.id] ?? 0;
+              final upcomingDates = upcomingDatesAsync.value?[cat.id] ?? [];
+
               return Card(
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  leading: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: catColor,
-                      shape: BoxShape.circle,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => context.push('/categories/${cat.id}'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Baris atas: dot warna + nama kategori + jumlah total jadwal
+                        Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: catColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                cat.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '$count jadwal',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.lightTextSecondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 18,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
+                            ),
+                          ],
+                        ),
+                        // Baris bawah: label kecil "Jadwal berikutnya" + chip tanggal (hanya jika ada jadwal mendatang)
+                        if (upcomingDates.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Jadwal berikutnya',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.lightTextSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: [
+                                    ...upcomingDates.take(2).map((date) {
+                                      final dateStr = DateFormat('d MMM').format(date);
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Colors.white.withValues(alpha: 0.08)
+                                              : Colors.black.withValues(alpha: 0.05),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? AppColors.darkBorder
+                                                : AppColors.lightBorder,
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          dateStr,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? AppColors.darkTextPrimary
+                                                : AppColors.lightTextPrimary,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                    if (upcomingDates.length > 2)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isDark
+                                              ? Colors.white.withValues(alpha: 0.08)
+                                              : Colors.black.withValues(alpha: 0.05),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isDark
+                                                ? AppColors.darkBorder
+                                                : AppColors.lightBorder,
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '+${upcomingDates.length - 2}',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? AppColors.amberDarkIndicator
+                                                : AppColors.amberLightIndicator,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  title: Text(
-                    cat.name,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    size: 20,
-                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                  ),
-                  onTap: () => context.push('/categories/${cat.id}'),
                 ),
               );
             },

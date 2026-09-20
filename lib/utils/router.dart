@@ -61,10 +61,10 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/',
+              path: '/categories',
               pageBuilder: (context, state) => _buildSharedAxisPage(
                 key: state.pageKey,
-                child: const HomeScreen(),
+                child: const ManageCategoriesScreen(),
               ),
             ),
           ],
@@ -72,10 +72,10 @@ final appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/categories',
+              path: '/',
               pageBuilder: (context, state) => _buildSharedAxisPage(
                 key: state.pageKey,
-                child: const ManageCategoriesScreen(),
+                child: const HomeScreen(),
               ),
             ),
           ],

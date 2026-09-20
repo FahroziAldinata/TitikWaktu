@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
-import 'package:titik_waktu/utils/date_format_helper.dart';
 import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -41,10 +41,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final schedulesAsync = ref.watch(dailySchedulesProvider);
-    final categoryMap = ref.watch(categoryMapProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    final schedulesAsync = ref.watch(dailySchedulesProvider);
+    final categoryMap = ref.watch(categoryMapProvider);
+    final categoriesAsync = ref.watch(categoryListProvider);
+    final categoryCountMap = ref.watch(categoryScheduleCountProvider);
+    final nextUpcomingAsync = ref.watch(nextUpcomingScheduleProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -53,121 +57,187 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.calendar_month_rounded),
             tooltip: 'Kalender Bulanan',
-            onPressed: () {
-              context.push('/calendar');
-            },
+            onPressed: () => context.push('/calendar'),
           ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'Riwayat Aktivitas',
-            onPressed: () {
-              context.push('/history');
-            },
+            onPressed: () => context.push('/history'),
           ),
         ],
       ),
-      body: schedulesAsync.when(
-        data: (schedules) {
-          if (schedules.isEmpty) {
-            return _buildEmptyState(context, isDark);
-          }
+      body: SlidableAutoCloseBehavior(
+        child: CustomScrollView(
+          slivers: [
+            // Section 1: Hero Card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _HeroCard(
+                  nextUpcomingAsync: nextUpcomingAsync,
+                  categoryMap: categoryMap,
+                  currentTime: _currentTime,
+                  isDark: isDark,
+                ),
+              ),
+            ),
 
-          return SlidableAutoCloseBehavior(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-              itemCount: schedules.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final schedule = schedules[index];
-                final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
-                return ScheduleSlidable(
-                  schedule: schedule,
-                  child: _buildScheduleCard(context, schedule, category, isDark),
+            // Section 2: Kategori Scroll Horizontal
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: _CategorySection(
+                  categoriesAsync: categoriesAsync,
+                  categoryCountMap: categoryCountMap,
+                  isDark: isDark,
+                ),
+              ),
+            ),
+
+            // Section 3 Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+                child: schedulesAsync.when(
+                  data: (schedules) => _sectionHeader(
+                    context, isDark, 'Semua Jadwal Hari Ini',
+                    count: schedules.length,
+                  ),
+                  loading: () => _sectionHeader(context, isDark, 'Semua Jadwal Hari Ini'),
+                  error: (_, __) => _sectionHeader(context, isDark, 'Semua Jadwal Hari Ini'),
+                ),
+              ),
+            ),
+
+            // Section 3: List / Empty State
+            schedulesAsync.when(
+              data: (schedules) {
+                if (schedules.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: _buildSection3Empty(context, isDark),
+                  );
+                }
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                  sliver: SliverList.separated(
+                    itemCount: schedules.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final schedule = schedules[index];
+                      final category = schedule.categoryId != null
+                          ? categoryMap[schedule.categoryId]
+                          : null;
+                      return ScheduleSlidable(
+                        schedule: schedule,
+                        child: _buildScheduleCard(context, schedule, category, isDark),
+                      );
+                    },
+                  ),
                 );
               },
+              loading: () => const SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+              error: (error, _) => SliverToBoxAdapter(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Text('Error: $error'),
+                  ),
+                ),
+              ),
             ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Text('Error: $error', style: theme.textTheme.bodyMedium),
+          ],
         ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 76),
         child: FloatingActionButton(
-          onPressed: () {
-            context.push('/add');
-          },
+          onPressed: () => context.push('/add'),
           child: const Icon(Icons.add),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, bool isDark) {
-    final theme = Theme.of(context);
-    final timeString = AppDateFormatter.formatTimeWithSeconds(_currentTime);
-    final dateString = AppDateFormatter.formatFullDate(_currentTime);
+  Widget _sectionHeader(BuildContext context, bool isDark, String title, {int? count}) {
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    return Row(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+            letterSpacing: -0.2,
+          ),
+        ),
+        if (count != null && count > 0) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.darkBorder : AppColors.lightBorder)
+                  .withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 
+  Widget _buildSection3Empty(BuildContext context, bool isDark) {
     final textMuted = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 96),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.darkSurface.withValues(alpha: 0.5)
+              : AppColors.lightSurface.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor.withValues(alpha: 0.7), width: 0.5),
+        ),
+        child: Row(
           children: [
-            Text(
-              'TITIK WAKTU',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 2.0,
-                color: textMuted,
+            Expanded(
+              child: Text(
+                'Tidak ada jadwal untuk hari ini',
+                style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              timeString,
-              style: theme.textTheme.headlineLarge?.copyWith(
-                fontSize: 42,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -1.0,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              dateString,
-              style: TextStyle(
-                fontSize: 13,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 28),
-            Text(
-              'Tidak ada jadwal untuk hari ini',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(width: 12),
             OutlinedButton.icon(
               onPressed: () => context.push('/add'),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Tambah Jadwal'),
+              icon: const Icon(Icons.add, size: 15),
+              label: const Text('Tambah', style: TextStyle(fontSize: 12)),
               style: OutlinedButton.styleFrom(
                 foregroundColor: textPrimary,
                 side: BorderSide(color: borderColor, width: 1),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
           ],
@@ -176,10 +246,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildScheduleCard(BuildContext context, Schedule schedule, Category? category, bool isDark) {
+  Widget _buildScheduleCard(
+      BuildContext context, Schedule schedule, Category? category, bool isDark) {
     final theme = Theme.of(context);
 
-    // Calculate if schedule is within the next 15 minutes
     final scheduleTimeToday = DateTime(
       _currentTime.year,
       _currentTime.month,
@@ -189,24 +259,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     final difference = scheduleTimeToday.difference(_currentTime);
-    final isUpcomingSoon = schedule.isActive && difference.inSeconds > 0 && difference.inMinutes < 15;
+    final isUpcomingSoon =
+        schedule.isActive && difference.inSeconds > 0 && difference.inMinutes < 15;
 
-    // Colors based on highlight status
-    Color cardBg;
-    Color cardBorder;
-    Color titleColor;
-    Color subtitleColor;
+    Color cardBg, cardBorder, titleColor, subtitleColor;
 
     if (isUpcomingSoon) {
       cardBg = isDark ? AppColors.amberDarkHighlightBg : AppColors.amberLightHighlightBg;
-      cardBorder = isDark ? AppColors.amberDarkHighlightBorder : AppColors.amberLightHighlightBorder;
-      titleColor = isDark ? AppColors.amberDarkHighlightTitle : AppColors.amberLightHighlightTitle;
-      subtitleColor = isDark ? AppColors.amberDarkHighlightSubtitle : AppColors.amberLightHighlightSubtitle;
+      cardBorder =
+          isDark ? AppColors.amberDarkHighlightBorder : AppColors.amberLightHighlightBorder;
+      titleColor =
+          isDark ? AppColors.amberDarkHighlightTitle : AppColors.amberLightHighlightTitle;
+      subtitleColor =
+          isDark ? AppColors.amberDarkHighlightSubtitle : AppColors.amberLightHighlightSubtitle;
     } else if (!schedule.isActive) {
-      cardBg = isDark ? AppColors.darkSurface.withValues(alpha: 0.5) : AppColors.lightSurface.withValues(alpha: 0.7);
-      cardBorder = isDark ? AppColors.darkBorder.withValues(alpha: 0.5) : AppColors.lightBorder.withValues(alpha: 0.6);
-      titleColor = isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7);
-      subtitleColor = isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.45) : AppColors.lightTextSecondary.withValues(alpha: 0.55);
+      cardBg = isDark
+          ? AppColors.darkSurface.withValues(alpha: 0.5)
+          : AppColors.lightSurface.withValues(alpha: 0.7);
+      cardBorder = isDark
+          ? AppColors.darkBorder.withValues(alpha: 0.5)
+          : AppColors.lightBorder.withValues(alpha: 0.6);
+      titleColor = isDark
+          ? AppColors.darkTextSecondary.withValues(alpha: 0.6)
+          : AppColors.lightTextSecondary.withValues(alpha: 0.7);
+      subtitleColor = isDark
+          ? AppColors.darkTextSecondary.withValues(alpha: 0.45)
+          : AppColors.lightTextSecondary.withValues(alpha: 0.55);
     } else {
       cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
       cardBorder = isDark ? AppColors.darkBorder : AppColors.lightBorder;
@@ -214,9 +292,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     }
 
-    final timeString = '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
+    final timeString =
+        '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
 
-    // Subtitle content: countdown if < 15m, inactive label if inactive, else category name
     String subtitleText;
     if (isUpcomingSoon) {
       final mins = difference.inMinutes;
@@ -227,7 +305,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       subtitleText = category?.name ?? '';
     }
 
-    // Schedule effective color
     Color? scheduleEffectiveColor;
     if (schedule.color != null && schedule.color != 0xFFFFFFFF && schedule.color != 0) {
       scheduleEffectiveColor = Color(schedule.color!);
@@ -237,8 +314,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (!schedule.isActive && scheduleEffectiveColor != null) {
       scheduleEffectiveColor = scheduleEffectiveColor.withValues(alpha: 0.35);
     }
-
-    final categoryDotColor = scheduleEffectiveColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -254,10 +329,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               left: 0,
               top: 0,
               bottom: 0,
-              child: Container(
-                width: 4,
-                color: scheduleEffectiveColor,
-              ),
+              child: Container(width: 4, color: scheduleEffectiveColor),
             ),
           InkWell(
             borderRadius: BorderRadius.circular(12),
@@ -265,95 +337,435 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
-          children: [
-            // Time Display (38-40px or compact structured)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  timeString,
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.5,
-                    color: titleColor,
-                  ),
-                ),
-                if (isUpcomingSoon)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      subtitleText,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: subtitleColor,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            // Title & Category metadata
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    schedule.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: titleColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Category Dot (8px diameter) if category exists
-                      if (!isUpcomingSoon && category != null && categoryDotColor != null) ...[
-                        Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(right: 6),
-                          decoration: BoxDecoration(
-                            color: categoryDotColor,
-                            shape: BoxShape.circle,
+                      Text(
+                        timeString,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.5,
+                          color: titleColor,
+                        ),
+                      ),
+                      if (isUpcomingSoon)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            subtitleText,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: subtitleColor,
+                            ),
                           ),
                         ),
-                      ],
-                      if (!isUpcomingSoon && subtitleText.isNotEmpty)
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          subtitleText,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: subtitleColor,
+                          schedule.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: titleColor,
+                            fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                    ],
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            if (!isUpcomingSoon &&
+                                category != null &&
+                                scheduleEffectiveColor != null) ...[
+                              Container(
+                                width: 8,
+                                height: 8,
+                                margin: const EdgeInsets.only(right: 6),
+                                decoration: BoxDecoration(
+                                  color: scheduleEffectiveColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                            if (!isUpcomingSoon && subtitleText.isNotEmpty)
+                              Text(
+                                subtitleText,
+                                style: TextStyle(fontSize: 11, color: subtitleColor),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: schedule.isActive,
+                    activeThumbColor: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.lightTextPrimary,
+                    onChanged: (value) {
+                      ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id);
+                    },
                   ),
                 ],
               ),
             ),
-            // Toggle Switch
-            Switch(
-              value: schedule.isActive,
-              activeThumbColor: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-              onChanged: (value) {
-                ref.read(scheduleListProvider.notifier).toggleSchedule(schedule.id);
-              },
-            ),
-              ],
-            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Hero Card Widget
+class _HeroCard extends StatelessWidget {
+  final AsyncValue<({Schedule schedule, DateTime occurrenceTime})?> nextUpcomingAsync;
+  final Map<int, Category> categoryMap;
+  final DateTime currentTime;
+  final bool isDark;
+
+  const _HeroCard({
+    required this.nextUpcomingAsync,
+    required this.categoryMap,
+    required this.currentTime,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const cardBg = Color(0xFF1C1C1A);
+    const cardBorder = Color(0xFF2E2E2B);
+
+    final nearest = nextUpcomingAsync.valueOrNull;
+
+    return GestureDetector(
+      onTap: nearest != null
+          ? () => context.push('/schedule/${nearest.schedule.id}')
+          : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cardBorder, width: 0.5),
+        ),
+        child: nextUpcomingAsync.when(
+          data: (n) => n == null ? _buildEmpty() : _buildContent(context, n.schedule, n.occurrenceTime),
+          loading: () => _buildEmpty(),
+          error: (_, __) => _buildEmpty(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'JADWAL BERIKUTNYA',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
+            color: Colors.white.withValues(alpha: 0.4),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Tidak ada jadwal mendatang',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: Colors.white.withValues(alpha: 0.55),
           ),
         ),
       ],
-    ),
-  );
+    );
+  }
+
+  Widget _buildContent(BuildContext context, Schedule schedule, DateTime occurrenceTime) {
+    final category = schedule.categoryId != null ? categoryMap[schedule.categoryId] : null;
+
+    final now = currentTime;
+    final today = DateTime(now.year, now.month, now.day);
+    final occDay = DateTime(occurrenceTime.year, occurrenceTime.month, occurrenceTime.day);
+    final diff = occurrenceTime.difference(now);
+
+    String topLabel;
+    if (occDay.isAtSameMomentAs(today)) {
+      if (diff.inMinutes < 1) {
+        topLabel = 'Hari ini · Kurang dari 1 menit lagi';
+      } else if (diff.inHours < 1) {
+        topLabel = 'Hari ini · ${diff.inMinutes} menit lagi';
+      } else {
+        final h = diff.inHours;
+        final m = diff.inMinutes % 60;
+        topLabel = m > 0 ? 'Hari ini · ${h}j ${m}m lagi' : 'Hari ini · $h jam lagi';
+      }
+    } else {
+      final dayDiff = occDay.difference(today).inDays;
+      String dayLabel;
+      if (dayDiff == 1) {
+        dayLabel = 'Besok';
+      } else if (dayDiff <= 6) {
+        dayLabel = DateFormat('EEEE', 'id').format(occurrenceTime);
+      } else {
+        dayLabel = DateFormat('d MMM', 'id').format(occurrenceTime);
+      }
+      topLabel = '$dayLabel · ${DateFormat('HH:mm').format(occurrenceTime)}';
+    }
+
+    final timeString =
+        '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
+
+    Color? catColor;
+    if (category != null) {
+      catColor = AppColors.parseCategoryColor(category.colorHex);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          topLabel.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            color: Colors.white.withValues(alpha: 0.5),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          timeString,
+          style: const TextStyle(
+            fontSize: 42,
+            fontWeight: FontWeight.w300,
+            letterSpacing: -2,
+            color: Colors.white,
+            height: 1.0,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            if (catColor != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
+              ),
+            ],
+            Expanded(
+              child: Text(
+                schedule.title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  letterSpacing: -0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: Colors.white.withValues(alpha: 0.3),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
+
+// Category Section Widget
+class _CategorySection extends StatelessWidget {
+  final AsyncValue<List<Category>> categoriesAsync;
+  final Map<int, int> categoryCountMap;
+  final bool isDark;
+
+  const _CategorySection({
+    required this.categoriesAsync,
+    required this.categoryCountMap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Text(
+            'Kategori',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ),
+        categoriesAsync.when(
+          data: (categories) {
+            if (categories.isEmpty) {
+              return _buildCategoryEmpty(context);
+            }
+            return SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final count = categoryCountMap[cat.id] ?? 0;
+                  return _CategoryCard(
+                    category: cat,
+                    scheduleCount: count,
+                    isDark: isDark,
+                  );
+                },
+              ),
+            );
+          },
+          loading: () => const SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (_, __) => const SizedBox(height: 100),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryEmpty(BuildContext context) {
+    final textMuted = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark
+              ? AppColors.darkSurface.withValues(alpha: 0.5)
+              : AppColors.lightSurface.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor.withValues(alpha: 0.7), width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Belum ada kategori',
+                style: TextStyle(fontSize: 13, color: textMuted),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.go('/categories'),
+              icon: const Icon(Icons.add, size: 15),
+              label: const Text('Buat', style: TextStyle(fontSize: 12)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: textPrimary,
+                side: BorderSide(color: borderColor, width: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+class _CategoryCard extends StatelessWidget {
+  final Category category;
+  final int scheduleCount;
+  final bool isDark;
+
+  const _CategoryCard({
+    required this.category,
+    required this.scheduleCount,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final catColor = AppColors.parseCategoryColor(category.colorHex);
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final cardBorder = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+    final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+
+    return GestureDetector(
+      onTap: () => context.push('/categories/${category.id}'),
+      child: Container(
+        width: 116,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder, width: 0.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$scheduleCount jadwal',
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

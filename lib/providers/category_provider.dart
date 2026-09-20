@@ -31,3 +31,22 @@ final categoryMapProvider = Provider<Map<int, Category>>((ref) {
     error: (_, __) => {},
   );
 });
+
+/// Map kategori ID → jumlah total jadwal (semua, bukan hanya hari ini).
+/// Digunakan untuk label "N jadwal" di kartu kategori.
+final categoryScheduleCountProvider = Provider<Map<int, int>>((ref) {
+  final schedulesAsync = ref.watch(scheduleListProvider);
+  return schedulesAsync.when(
+    data: (schedules) {
+      final map = <int, int>{};
+      for (final s in schedules) {
+        if (s.categoryId != null) {
+          map[s.categoryId!] = (map[s.categoryId!] ?? 0) + 1;
+        }
+      }
+      return map;
+    },
+    loading: () => {},
+    error: (_, __) => {},
+  );
+});

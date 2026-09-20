@@ -375,4 +375,99 @@ final dailySchedulesProvider = Provider<AsyncValue<List<Schedule>>>((ref) {
   });
 });
 
+/// Cari DateTime occurrence berikutnya dari schedule setelah [after].
+/// Iterate harian max 365 hari ke depan. Return null jika tidak ada.
+DateTime? findNextOccurrenceAfter(Schedule schedule, DateTime after) {
+  // Iterasi dari hari ini atau start date, cek tiap hari
+  final startSearch = DateTime(after.year, after.month, after.day);
+
+  for (int i = 0; i < 365; i++) {
+    final checkDay = startSearch.add(Duration(days: i));
+    if (!isScheduleOccurringOn(schedule, checkDay)) continue;
+
+    // Occurrence terjadi di checkDay — hitung waktu tepatnya
+    final occurrenceDateTime = DateTime(
+      checkDay.year,
+      checkDay.month,
+      checkDay.day,
+      schedule.time.hour,
+      schedule.time.minute,
+    );
+
+    // Kalau hari pertama (hari ini), cek apakah jamnya belum lewat
+    if (i == 0 && occurrenceDateTime.isBefore(after)) continue;
+
+    return occurrenceDateTime;
+  }
+  return null;
+}
+
+/// Jadwal terdekat dari sekarang (lintas hari jika perlu).
+/// Return null jika tidak ada jadwal mendatang sama sekali.
+final nextUpcomingScheduleProvider =
+    Provider<AsyncValue<({Schedule schedule, DateTime occurrenceTime})?>>((ref) {
+  final schedulesAsync = ref.watch(scheduleListProvider);
+  return schedulesAsync.whenData((schedules) {
+    final now = DateTime.now();
+
+    ({Schedule schedule, DateTime occurrenceTime})? nearest;
+
+    for (final s in schedules) {
+      final occ = findNextOccurrenceAfter(s, now);
+      if (occ == null) continue;
+      if (nearest == null || occ.isBefore(nearest.occurrenceTime)) {
+        nearest = (schedule: s, occurrenceTime: occ);
+      }
+    }
+    return nearest;
+  });
+});
+
+/// Map categoryId → List<DateTime> (jadwal mendatang terdekat per kategori).
+/// Digunakan untuk chip tanggal di Kelola Kategori.
+final categoryUpcomingDatesProvider =
+    Provider<AsyncValue<Map<int, List<DateTime>>>>((ref) {
+  final schedulesAsync = ref.watch(scheduleListProvider);
+  return schedulesAsync.whenData((schedules) {
+    final now = DateTime.now();
+    final result = <int, List<DateTime>>{};
+
+    for (final s in schedules) {
+      if (s.categoryId == null) continue;
+      // Cari occurrence mendatang untuk schedule ini
+      final dates = _findNextNOccurrences(s, now, n: 10);
+      final catList = result.putIfAbsent(s.categoryId!, () => []);
+      catList.addAll(dates);
+    }
+
+    // Per kategori: sort kronologis
+    for (final key in result.keys) {
+      result[key]!.sort();
+    }
+    return result;
+  });
+});
+
+/// Cari N occurrence berikutnya dari schedule setelah [after].
+List<DateTime> _findNextNOccurrences(Schedule schedule, DateTime after, {int n = 10}) {
+  final results = <DateTime>[];
+  final startSearch = DateTime(after.year, after.month, after.day);
+
+  for (int i = 0; i < 365 && results.length < n; i++) {
+    final checkDay = startSearch.add(Duration(days: i));
+    if (!isScheduleOccurringOn(schedule, checkDay)) continue;
+
+    final occurrenceDateTime = DateTime(
+      checkDay.year,
+      checkDay.month,
+      checkDay.day,
+      schedule.time.hour,
+      schedule.time.minute,
+    );
+
+    if (i == 0 && occurrenceDateTime.isBefore(after)) continue;
+    results.add(occurrenceDateTime);
+  }
+  return results;
+}
 
