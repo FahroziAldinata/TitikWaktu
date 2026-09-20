@@ -14,6 +14,18 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// Disable crashing lint detector in all Android subprojects (incl. file_picker)
+subprojects {
+    pluginManager.withPlugin('com.android.library') {
+        android {
+            lint {
+                disable "NullSafeMutableLiveData"
+                checkReleaseBuilds false
+            }
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
