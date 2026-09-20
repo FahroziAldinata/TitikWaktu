@@ -62,13 +62,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               context.push('/history');
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.category_outlined),
-            tooltip: 'Kelola Kategori',
-            onPressed: () {
-              context.push('/categories');
-            },
-          ),
         ],
       ),
       body: schedulesAsync.when(
@@ -78,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
             itemCount: schedules.length,
             separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
@@ -93,11 +86,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: Text('Error: $error', style: theme.textTheme.bodyMedium),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.push('/add');
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 76),
+        child: FloatingActionButton(
+          onPressed: () {
+            context.push('/add');
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
