@@ -23,7 +23,7 @@ class FloatingBottomNavBar extends StatelessWidget {
 
   static const List<NavItemData> items = [
     NavItemData(
-      icon: Icons.category_rounded,
+      icon: Icons.grid_view_rounded,
       label: 'Kategori',
     ),
     NavItemData(
