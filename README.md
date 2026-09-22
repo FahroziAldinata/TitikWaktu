@@ -58,7 +58,7 @@ kontrol penuh atas exact alarm, full-screen intent, dan reboot persistence.
 
 ```bash
 # Clone repo
-git clone https://github.com/<username>/titikwaktu.git
+git clone https://github.com/FahroziAldinata/titikwaktu.git
 cd titikwaktu
 
 # Install dependencies
@@ -117,5 +117,5 @@ Project ini dilisensikan di bawah [MIT License](LICENSE).
 ---
 
 <div align="center">
-Dibuat dengan ⏱️ oleh <a href="https://github.com/<username>">Fahrozi Aldinata</a>
+Dibuat dengan ⏱️ oleh <a href="https://github.com/FahroziAldinata">Fahrozi Aldinata</a>
 </div>
