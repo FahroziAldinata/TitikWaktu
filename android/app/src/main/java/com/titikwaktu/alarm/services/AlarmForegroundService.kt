@@ -52,9 +52,26 @@ class AlarmForegroundService : Service() {
             return START_NOT_STICKY
         }
         
-        val notification = createNotification(scheduleId, title, description)
+        val notification = createNotification(scheduleId, title, description, ringtoneUri)
         startForeground(NOTIFICATION_ID, notification)
         
+        // Panggil startActivity langsung untuk skenario layar menyala / tidak terkunci
+        try {
+            val directIntent = Intent(this, AlarmRingingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
+                putExtra(AlarmRingingActivity.EXTRA_TITLE, title)
+                putExtra(AlarmRingingActivity.EXTRA_DESCRIPTION, description)
+                if (!ringtoneUri.isNullOrEmpty()) {
+                    putExtra(AlarmRingingActivity.EXTRA_RINGTONE_URI, ringtoneUri)
+                }
+            }
+            startActivity(directIntent)
+            Log.i("AlarmForegroundService", "Direct startActivity(AlarmRingingActivity) invoked successfully")
+        } catch (e: Exception) {
+            Log.w("AlarmForegroundService", "Direct startActivity failed: ${e.message}")
+        }
+
         startAlarmSound(ringtoneUri)
         
         return START_STICKY
@@ -84,7 +101,12 @@ class AlarmForegroundService : Service() {
         }
     }
     
-    private fun createNotification(scheduleId: String, title: String, description: String): Notification {
+    private fun createNotification(
+        scheduleId: String,
+        title: String,
+        description: String,
+        ringtoneUri: String?
+    ): Notification {
         val dismissIntent = Intent(this, DismissReceiver::class.java).apply {
             putExtra(DismissReceiver.EXTRA_SCHEDULE_ID, scheduleId)
         }
@@ -97,6 +119,11 @@ class AlarmForegroundService : Service() {
         
         val snoozeIntent = Intent(this, SnoozeReceiver::class.java).apply {
             putExtra(SnoozeReceiver.EXTRA_SCHEDULE_ID, scheduleId)
+            putExtra(SnoozeReceiver.EXTRA_TITLE, title)
+            putExtra(SnoozeReceiver.EXTRA_DESCRIPTION, description)
+            if (!ringtoneUri.isNullOrEmpty()) {
+                putExtra(SnoozeReceiver.EXTRA_RINGTONE_URI, ringtoneUri)
+            }
             putExtra(SnoozeReceiver.EXTRA_SNOOZE_DURATION, 5 * 60 * 1000L)
         }
         val snoozePendingIntent = PendingIntent.getBroadcast(
@@ -107,10 +134,13 @@ class AlarmForegroundService : Service() {
         )
         
         val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra(AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
             putExtra(AlarmRingingActivity.EXTRA_TITLE, title)
             putExtra(AlarmRingingActivity.EXTRA_DESCRIPTION, description)
+            if (!ringtoneUri.isNullOrEmpty()) {
+                putExtra(AlarmRingingActivity.EXTRA_RINGTONE_URI, ringtoneUri)
+            }
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,

@@ -25,15 +25,15 @@ class BulkTimeSetterScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Set Jam — ${category.name}'),
+        title: Text('Review & Simpan — ${category.name}'),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(36),
+          preferredSize: const Size.fromHeight(38),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
             child: Text(
-              'Tap baris untuk memilih jam. Semua baris harus terisi sebelum menyimpan.',
+              'Tahap Akhir: Periksa kembali tanggal, jam, dan judul jadwal sebelum disimpan.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary

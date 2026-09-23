@@ -8,6 +8,7 @@ import 'package:titik_waktu/providers/category_provider.dart';
 import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/services/ringtone_service.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
+import 'package:titik_waktu/widgets/category_color_picker_field.dart';
 import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 
 class ManageCategoriesScreen extends ConsumerWidget {
@@ -357,40 +358,11 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
               },
             ),
             const SizedBox(height: 24),
-            Text(
-              'Pilih Warna Dot',
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: AppColors.categoryOptions.map((opt) {
-                final isSelected = _selectedHex.toLowerCase() == opt.hex.toLowerCase();
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedHex = opt.hex;
-                    });
-                  },
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: opt.color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? (isDark ? Colors.white : Colors.black)
-                            : Colors.transparent,
-                        width: 2.5,
-                      ),
-                    ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 20)
-                        : null,
-                  ),
-                );
-              }).toList(),
+            CategoryColorPickerField(
+              selectedHex: _selectedHex,
+              onColorChanged: (hex) {
+                setState(() => _selectedHex = hex);
+              },
             ),
             const SizedBox(height: 20),
             Text(

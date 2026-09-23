@@ -145,11 +145,64 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Overview Banner ─────────────────────────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: catColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: catColor.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline_rounded,
+                    color: isDark
+                        ? AppColors.amberDarkIndicator
+                        : AppColors.amberLightIndicator,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Konsep Slot Generator',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Buat jadwal berulang di jam yang sama, dengan konten yang bisa beda tiap kemunculan (misal main game atau nonton film bergantian).',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
             // ── Section 1: Pola Waktu & Hari ────────────────────────────
             _buildSectionHeader(
               context,
-              icon: Icons.access_time_filled_rounded,
-              title: 'Pola Waktu & Hari',
+              icon: Icons.looks_one_rounded,
+              title: 'Langkah 1: Jam & Hari (Slot Tetap)',
               color: catColor,
             ),
             const SizedBox(height: 10),
@@ -342,8 +395,8 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
             // ── Section 2: Jumlah Occurrence ────────────────────────────
             _buildSectionHeader(
               context,
-              icon: Icons.repeat_rounded,
-              title: 'Jumlah Jadwal (Occurrence)',
+              icon: Icons.looks_two_rounded,
+              title: 'Langkah 2: Berapa Kali (Jumlah Jadwal)',
               color: catColor,
             ),
             const SizedBox(height: 10),
@@ -440,13 +493,13 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
             // ── Section 3: Daftar Item Pool (Opsional) ──────────────────
             _buildSectionHeader(
               context,
-              icon: Icons.shuffle_rounded,
-              title: 'Daftar Item / Rotasi Acak (Opsional)',
+              icon: Icons.looks_3_rounded,
+              title: 'Langkah 3: Rotasi Item / Konten Acak (Opsional)',
               color: catColor,
             ),
             const SizedBox(height: 6),
             Text(
-              'Masukkan nama game, film, atau aktivitas. Item akan diacak per siklus tanpa ada 2 item sama berurutan.',
+              'Isi daftar hal yang mau digilir (misal nama game/film). Kosongkan kalau semua jadwal pakai nama yang sama.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -476,7 +529,7 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _addItem(),
                           decoration: InputDecoration(
-                            hintText: 'Ketik nama item (misal: Zelda, Mario)',
+                            hintText: 'Contoh: Valorant, Mario Kart, Zelda...',
                             hintStyle: theme.textTheme.bodySmall?.copyWith(
                               color: isDark
                                   ? AppColors.darkTextSecondary.withValues(alpha: 0.6)
@@ -588,8 +641,8 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
             // ── Section 4: Tipe Notifikasi ──────────────────────────────
             _buildSectionHeader(
               context,
-              icon: Icons.notifications_active_rounded,
-              title: 'Tipe Notifikasi',
+              icon: Icons.looks_4_rounded,
+              title: 'Langkah 4: Tipe Notifikasi',
               color: catColor,
             ),
             const SizedBox(height: 10),
@@ -633,7 +686,7 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
                 onPressed: _generate,
                 icon: const Icon(Icons.auto_awesome_rounded),
                 label: Text(
-                  'Generate ${_countController.text} Jadwal',
+                  'Generate ${_countController.text} Jadwal (Lanjut ke Review)',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

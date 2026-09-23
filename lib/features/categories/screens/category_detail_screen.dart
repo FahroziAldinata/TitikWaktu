@@ -10,6 +10,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:titik_waktu/services/ringtone_service.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
+import 'package:titik_waktu/widgets/category_color_picker_field.dart';
 import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
@@ -303,7 +304,7 @@ class CategoryDetailScreen extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
-                    'Pilih tanggal satu per satu di tampilan kalender',
+                    'Untuk tanggal spesifik yang tidak berpola, misal jadwal pertandingan',
                     style: TextStyle(
                       color: isDark
                           ? AppColors.darkTextSecondary
@@ -347,7 +348,7 @@ class CategoryDetailScreen extends ConsumerWidget {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
-                    'Slot waktu tetap & rotasi acak item (game, film, dll)',
+                    'Untuk jadwal rutin jam yang sama, kontennya beda tiap hari - misal main game gantian',
                     style: TextStyle(
                       color: isDark
                           ? AppColors.darkTextSecondary
@@ -517,37 +518,9 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
               },
             ),
             const SizedBox(height: 24),
-            Text(
-              'Pilih Warna Dot',
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: AppColors.categoryOptions.map((opt) {
-                final isSelected =
-                    _selectedHex.toLowerCase() == opt.hex.toLowerCase();
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedHex = opt.hex),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: opt.color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? (isDark ? Colors.white : Colors.black)
-                            : Colors.transparent,
-                        width: 2.5,
-                      ),
-                    ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 20)
-                        : null,
-                  ),
-                );
-              }).toList(),
+            CategoryColorPickerField(
+              selectedHex: _selectedHex,
+              onColorChanged: (hex) => setState(() => _selectedHex = hex),
             ),
             const SizedBox(height: 20),
             Text(

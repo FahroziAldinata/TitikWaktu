@@ -34,6 +34,23 @@ class AlarmReceiver : BroadcastReceiver() {
         } else {
             context.startService(serviceIntent)
         }
+
+        // Direct startActivity saat alarm wake up dari AlarmManager
+        try {
+            val activityIntent = Intent(context, com.titikwaktu.alarm.AlarmRingingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
+                putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_TITLE, title)
+                putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_DESCRIPTION, description)
+                if (!ringtoneUri.isNullOrEmpty()) {
+                    putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_RINGTONE_URI, ringtoneUri)
+                }
+            }
+            context.startActivity(activityIntent)
+            Log.i("AlarmReceiver", "Direct startActivity(AlarmRingingActivity) from AlarmReceiver succeeded")
+        } catch (e: Exception) {
+            Log.w("AlarmReceiver", "Direct startActivity from AlarmReceiver skipped: ${e.message}")
+        }
     }
     
     companion object {
