@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.titikwaktu.alarm.R
 import com.titikwaktu.alarm.receivers.DismissReceiver
 import com.titikwaktu.alarm.receivers.SnoozeReceiver
+import com.titikwaktu.alarm.AlarmRingingActivity
 
 import android.util.Log
 
@@ -105,12 +106,11 @@ class AlarmForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        val fullScreenIntent = Intent(this, com.titikwaktu.alarm.MainActivity::class.java).apply {
+        val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("route", "/alarm/$scheduleId")
-            putExtra("schedule_id", scheduleId)
-            putExtra("title", title)
-            putExtra("description", description)
+            putExtra(AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
+            putExtra(AlarmRingingActivity.EXTRA_TITLE, title)
+            putExtra(AlarmRingingActivity.EXTRA_DESCRIPTION, description)
         }
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,

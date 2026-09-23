@@ -50,7 +50,7 @@ class BulkTimeSetterScreen extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: sortedDates.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final date = sortedDates[index];
                 final time = bulkState.timeMap[date];
@@ -60,99 +60,188 @@ class BulkTimeSetterScreen extends ConsumerWidget {
                     ? '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}'
                     : '--:--';
 
-                return Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _pickTime(context, ref, date, time),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: hasTime
-                              ? catColor.withValues(alpha: 0.45)
-                              : (isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightBorder),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Color bar
-                          Container(
-                            width: 4,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: hasTime
-                                  ? catColor
-                                  : (isDark
-                                      ? AppColors.darkBorder
-                                      : AppColors.lightBorder),
-                              borderRadius: BorderRadius.circular(2),
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.lightSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: hasTime
+                          ? catColor.withValues(alpha: 0.45)
+                          : (isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Baris tanggal & picker jam
+                      InkWell(
+                        onTap: () => _pickTime(context, ref, date, time),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Row(
+                          children: [
+                            // Color bar
+                            Container(
+                              width: 4,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: hasTime
+                                    ? catColor
+                                    : (isDark
+                                        ? AppColors.darkBorder
+                                        : AppColors.lightBorder),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          // Date + hint
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  dateStr,
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                if (!hasTime) ...[
-                                  const SizedBox(height: 2),
+                            const SizedBox(width: 10),
+                            // Date
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Text(
-                                    'Tap untuk set jam',
+                                    dateStr,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    hasTime ? 'Tap untuk ubah jam' : 'Tap untuk set jam',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: isDark
                                           ? AppColors.darkTextSecondary
                                           : AppColors.lightTextSecondary,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                          // Time display
-                          Text(
-                            timeStr,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                              color: hasTime
-                                  ? (isDark
-                                      ? AppColors.amberDarkIndicator
-                                      : AppColors.amberLightIndicator)
-                                  : (isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.lightTextSecondary),
+                            // Time button
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: hasTime
+                                    ? catColor.withValues(alpha: 0.15)
+                                    : (isDark
+                                        ? AppColors.darkBackground
+                                        : AppColors.lightBackground),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: hasTime
+                                      ? catColor.withValues(alpha: 0.5)
+                                      : (isDark
+                                          ? AppColors.darkBorder
+                                          : AppColors.lightBorder),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time_rounded,
+                                    size: 16,
+                                    color: hasTime
+                                        ? (isDark
+                                            ? AppColors.amberDarkIndicator
+                                            : AppColors.amberLightIndicator)
+                                        : (isDark
+                                            ? AppColors.darkTextSecondary
+                                            : AppColors.lightTextSecondary),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    timeStr,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      fontFamily: 'monospace',
+                                      color: hasTime
+                                          ? (isDark
+                                              ? AppColors.amberDarkIndicator
+                                              : AppColors.amberLightIndicator)
+                                          : (isDark
+                                              ? AppColors.darkTextSecondary
+                                              : AppColors.lightTextSecondary),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Status icon
-                          Icon(
-                            hasTime
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            size: 18,
-                            color: hasTime
-                                ? AppColors.statusSuccess
-                                : (isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      // Field Nama Jadwal (Opsional)
+                      TextFormField(
+                        key: ValueKey('title_${date.millisecondsSinceEpoch}'),
+                        initialValue: bulkState.titleMap[date] ?? '',
+                        decoration: InputDecoration(
+                          hintText: 'Nama jadwal (opsional, default: ${category.name})',
+                          hintStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextSecondary.withValues(alpha: 0.6)
+                                : AppColors.lightTextSecondary.withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          filled: true,
+                          fillColor: isDark
+                              ? AppColors.darkBackground
+                              : AppColors.lightBackground,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
+                              width: 0.8,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
+                              width: 0.8,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: catColor,
+                              width: 1.2,
+                            ),
+                          ),
+                          prefixIcon: Icon(
+                            Icons.label_outline_rounded,
+                            size: 16,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 13,
+                        ),
+                        onChanged: (val) {
+                          ref
+                              .read(bulkScheduleProvider.notifier)
+                              .setTitle(date, val);
+                        },
+                      ),
+                    ],
                   ),
                 );
               },

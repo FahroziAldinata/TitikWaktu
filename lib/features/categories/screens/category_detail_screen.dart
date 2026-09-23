@@ -226,9 +226,11 @@ class CategoryDetailScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(
-          '/categories/$categoryId/calendar',
-          extra: category,
+        onPressed: () => _showAddBulkOptionsSheet(
+          context,
+          category,
+          catColor,
+          isDark,
         ),
         icon: const Icon(Icons.add_to_photos_outlined),
         label: const Text('Tambah Banyak Jadwal'),
@@ -238,6 +240,137 @@ class CategoryDetailScreen extends ConsumerWidget {
         extendedPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  void _showAddBulkOptionsSheet(
+    BuildContext context,
+    Category category,
+    Color catColor,
+    bool isDark,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    'Tambah Banyak Jadwal',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Opsi 1: Manual Kalender
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: catColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.calendar_month_outlined,
+                      color: catColor,
+                      size: 22,
+                    ),
+                  ),
+                  title: const Text(
+                    'Pilih Manual di Kalender',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Pilih tanggal satu per satu di tampilan kalender',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    context.push(
+                      '/categories/${category.id}/calendar',
+                      extra: category,
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                // Opsi 2: Generate Otomatis (Slot)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (isDark
+                              ? AppColors.amberDarkIndicator
+                              : AppColors.amberLightIndicator)
+                          .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      color: isDark
+                          ? AppColors.amberDarkIndicator
+                          : AppColors.amberLightIndicator,
+                      size: 22,
+                    ),
+                  ),
+                  title: const Text(
+                    'Generate Otomatis (Slot)',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Slot waktu tetap & rotasi acak item (game, film, dll)',
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    context.push(
+                      '/categories/${category.id}/slot-generator',
+                      extra: category,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

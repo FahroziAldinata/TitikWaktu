@@ -11,12 +11,14 @@ import 'package:titik_waktu/services/alarm_service.dart';
 class BulkScheduleState {
   final Set<DateTime> selectedDates;
   final Map<DateTime, TimeOfDay?> timeMap;
+  final Map<DateTime, String> titleMap;
   final NotificationType notificationType;
   final bool isSaving;
 
   const BulkScheduleState({
     this.selectedDates = const {},
     this.timeMap = const {},
+    this.titleMap = const {},
     this.notificationType = NotificationType.notification,
     this.isSaving = false,
   });
@@ -24,12 +26,14 @@ class BulkScheduleState {
   BulkScheduleState copyWith({
     Set<DateTime>? selectedDates,
     Map<DateTime, TimeOfDay?>? timeMap,
+    Map<DateTime, String>? titleMap,
     NotificationType? notificationType,
     bool? isSaving,
   }) {
     return BulkScheduleState(
       selectedDates: selectedDates ?? this.selectedDates,
       timeMap: timeMap ?? this.timeMap,
+      titleMap: titleMap ?? this.titleMap,
       notificationType: notificationType ?? this.notificationType,
       isSaving: isSaving ?? this.isSaving,
     );
@@ -74,6 +78,38 @@ class BulkScheduleNotifier extends StateNotifier<BulkScheduleState> {
     state = state.copyWith(timeMap: currentTimeMap);
   }
 
+  /// Set custom judul untuk tanggal tertentu
+  void setTitle(DateTime date, String title) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final currentTitleMap = Map<DateTime, String>.from(state.titleMap);
+    currentTitleMap[normalized] = title;
+    state = state.copyWith(titleMap: currentTitleMap);
+  }
+
+  /// Inisialisasi state dari Slot Generator
+  void initFromSlotGenerator({
+    required List<DateTime> dates,
+    required TimeOfDay slotTime,
+    required Map<DateTime, String> titles,
+    NotificationType? notificationType,
+  }) {
+    final normalizedDates =
+        dates.map((d) => DateTime(d.year, d.month, d.day)).toSet();
+    final timeMap = <DateTime, TimeOfDay?>{
+      for (final d in normalizedDates) d: slotTime,
+    };
+    final normalizedTitleMap = <DateTime, String>{
+      for (final entry in titles.entries)
+        DateTime(entry.key.year, entry.key.month, entry.key.day): entry.value,
+    };
+    state = state.copyWith(
+      selectedDates: normalizedDates,
+      timeMap: timeMap,
+      titleMap: normalizedTitleMap,
+      notificationType: notificationType ?? state.notificationType,
+    );
+  }
+
   /// Ubah tipe notifikasi untuk seluruh batch
   void setNotificationType(NotificationType type) {
     state = state.copyWith(notificationType: type);
@@ -99,8 +135,12 @@ class BulkScheduleNotifier extends StateNotifier<BulkScheduleState> {
           tod.hour,
           tod.minute,
         );
+        final customTitle = (state.titleMap[date] ?? '').trim();
+        final scheduleTitle =
+            customTitle.isNotEmpty ? customTitle : category.name;
+
         return SchedulesCompanion(
-          title: Value(category.name),
+          title: Value(scheduleTitle),
           time: Value(scheduleDateTime),
           startDate: Value(scheduleDateTime),
           categoryId: Value(category.id),

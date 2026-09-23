@@ -40,6 +40,17 @@
             </intent-filter>
         </activity>
         
+        <!-- Full-Screen Alarm Overlay Activity -->
+        <activity
+            android:name=".AlarmRingingActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:theme="@style/AlarmRingingTheme" />
+        
         <!-- Alarm Receiver -->
         <receiver
             android:name="com.titikwaktu.alarm.receivers.AlarmReceiver"

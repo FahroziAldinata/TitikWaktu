@@ -31,6 +31,13 @@ class SnoozeReceiver : BroadcastReceiver() {
                 pendingIntent
             )
         }
+
+        // Dismiss current sounding alarm
+        val serviceIntent = Intent(context, com.titikwaktu.alarm.services.AlarmForegroundService::class.java).apply {
+            putExtra(com.titikwaktu.alarm.services.AlarmForegroundService.ACTION_DISMISS, true)
+            putExtra(EXTRA_SCHEDULE_ID, scheduleId)
+        }
+        context.startService(serviceIntent)
     }
     
     private fun createAlarmPendingIntent(context: Context, scheduleId: String): android.app.PendingIntent {

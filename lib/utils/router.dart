@@ -5,6 +5,7 @@ import 'package:titik_waktu/database/database.dart';
 import 'package:titik_waktu/features/categories/screens/bulk_time_setter_screen.dart';
 import 'package:titik_waktu/features/categories/screens/category_calendar_picker_screen.dart';
 import 'package:titik_waktu/features/categories/screens/category_detail_screen.dart';
+import 'package:titik_waktu/features/categories/screens/slot_generator_screen.dart';
 import 'package:titik_waktu/features/categories/screens/manage_categories_screen.dart';
 import 'package:titik_waktu/features/main/main_shell_screen.dart';
 import 'package:titik_waktu/features/onboarding/screens/permission_onboarding_screen.dart';
@@ -119,6 +120,16 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) => _buildSharedAxisPage(
         key: state.pageKey,
         child: BulkTimeSetterScreen(
+          category: state.extra as Category,
+        ),
+      ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/categories/:id/slot-generator',
+      pageBuilder: (context, state) => _buildSharedAxisPage(
+        key: state.pageKey,
+        child: SlotGeneratorScreen(
           category: state.extra as Category,
         ),
       ),
