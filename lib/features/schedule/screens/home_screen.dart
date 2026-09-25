@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -250,17 +251,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       BuildContext context, Schedule schedule, Category? category, bool isDark) {
     final theme = Theme.of(context);
 
-    final scheduleTimeToday = DateTime(
-      _currentTime.year,
-      _currentTime.month,
-      _currentTime.day,
-      schedule.time.hour,
-      schedule.time.minute,
-    );
+    final scheduleTimeToday = schedule.time != null
+        ? DateTime(
+            _currentTime.year,
+            _currentTime.month,
+            _currentTime.day,
+            schedule.time!.hour,
+            schedule.time!.minute,
+          )
+        : null;
 
-    final difference = scheduleTimeToday.difference(_currentTime);
-    final isUpcomingSoon =
-        schedule.isActive && difference.inSeconds > 0 && difference.inMinutes < 15;
+    final difference = scheduleTimeToday?.difference(_currentTime);
+    final isUpcomingSoon = schedule.isActive &&
+        difference != null &&
+        difference.inSeconds > 0 &&
+        difference.inMinutes < 15;
 
     Color cardBg, cardBorder, titleColor, subtitleColor;
 
@@ -292,8 +297,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
     }
 
-    final timeString =
-        '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
+    final timeString = schedule.time != null
+        ? '${schedule.time!.hour.toString().padLeft(2, '0')}:${schedule.time!.minute.toString().padLeft(2, '0')}'
+        : '--:--';
 
     String subtitleText;
     if (isUpcomingSoon) {
@@ -338,33 +344,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        timeString,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.5,
-                          color: titleColor,
-                        ),
-                      ),
-                      if (isUpcomingSoon)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            subtitleText,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: subtitleColor,
-                            ),
+                  if (schedule.time != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          timeString,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: -0.5,
+                            color: titleColor,
                           ),
                         ),
-                    ],
-                  ),
+                        if (isUpcomingSoon)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              subtitleText,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: subtitleColor,
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.amber.withOpacity(0.12) : Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isDark ? Colors.amber.withOpacity(0.3) : Colors.amber.shade200,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        'Waktu belum diatur',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? Colors.amber.shade300 : Colors.amber.shade800,
+                        ),
+                      ),
+                    ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -527,8 +554,9 @@ class _HeroCard extends StatelessWidget {
       topLabel = '$dayLabel · ${DateFormat('HH:mm').format(occurrenceTime)}';
     }
 
-    final timeString =
-        '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
+    final timeString = schedule.time != null
+        ? '${schedule.time!.hour.toString().padLeft(2, '0')}:${schedule.time!.minute.toString().padLeft(2, '0')}'
+        : '--:--';
 
     Color? catColor;
     if (category != null) {
@@ -630,8 +658,9 @@ class _CategorySection extends StatelessWidget {
             if (categories.isEmpty) {
               return _buildCategoryEmpty(context);
             }
+            final cardWidth = (MediaQuery.of(context).size.width - 40) / 2.15;
             return SizedBox(
-              height: 100,
+              height: 136,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -643,16 +672,17 @@ class _CategorySection extends StatelessWidget {
                     category: cat,
                     scheduleCount: count,
                     isDark: isDark,
+                    width: cardWidth,
                   );
                 },
               ),
             );
           },
           loading: () => const SizedBox(
-            height: 100,
+            height: 136,
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (_, __) => const SizedBox(height: 100),
+          error: (_, __) => const SizedBox(height: 136),
         ),
       ],
     );
@@ -707,11 +737,13 @@ class _CategoryCard extends StatelessWidget {
   final Category category;
   final int scheduleCount;
   final bool isDark;
+  final double width;
 
   const _CategoryCard({
     required this.category,
     required this.scheduleCount,
     required this.isDark,
+    required this.width,
   });
 
   @override
@@ -722,46 +754,109 @@ class _CategoryCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final textSecondary = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
+    final hasCover = category.coverImageUri != null &&
+        category.coverImageUri!.isNotEmpty &&
+        File(category.coverImageUri!).existsSync();
+
     return GestureDetector(
       onTap: () => context.push('/categories/${category.id}'),
       child: Container(
-        width: 116,
+        width: width,
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: cardBorder, width: 0.5),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  category.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: textPrimary,
-                    letterSpacing: -0.2,
+            // Top 50%: Cover image or solid color fallback with gradient fade
+            Expanded(
+              flex: 1,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (hasCover)
+                    Image.file(
+                      File(category.coverImageUri!),
+                      fit: BoxFit.cover,
+                    )
+                  else
+                    Container(
+                      color: catColor.withOpacity(0.35),
+                      child: Center(
+                        child: Icon(
+                          Icons.folder_outlined,
+                          size: 26,
+                          color: catColor,
+                        ),
+                      ),
+                    ),
+                  // Gradient fade to card background
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            cardBg.withOpacity(0.8),
+                            cardBg,
+                          ],
+                          stops: const [0.4, 0.85, 1.0],
+                        ),
+                      ),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                ],
+              ),
+            ),
+            // Bottom 50%: Name and schedule count
+            Expanded(
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 14),
+                      child: Text(
+                        '$scheduleCount jadwal',
+                        style: TextStyle(fontSize: 11, color: textSecondary),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '$scheduleCount jadwal',
-                  style: TextStyle(fontSize: 11, color: textSecondary),
-                ),
-              ],
+              ),
             ),
           ],
         ),

@@ -51,8 +51,9 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
           scheduleEffectiveColor = AppColors.parseCategoryColor(category.colorHex);
         }
 
-        final timeString =
-            '${schedule.time.hour.toString().padLeft(2, '0')}:${schedule.time.minute.toString().padLeft(2, '0')}';
+        final timeString = schedule.time != null
+            ? '${schedule.time!.hour.toString().padLeft(2, '0')}:${schedule.time!.minute.toString().padLeft(2, '0')}'
+            : 'Waktu belum diatur';
         final dateString = schedule.startDate != null
             ? AppDateFormatter.formatFullDate(schedule.startDate!)
             : '-';
@@ -110,15 +111,44 @@ class _ScheduleDetailScreenState extends ConsumerState<ScheduleDetailScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                       child: Column(
                         children: [
-                    Text(
-                      timeString,
-                      style: TextStyle(
-                        fontSize: 44,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -1.0,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    if (schedule.time != null)
+                      Text(
+                        timeString,
+                        style: TextStyle(
+                          fontSize: 44,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -1.0,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.amber.withOpacity(0.15) : Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDark ? Colors.amber.withOpacity(0.4) : Colors.amber.shade300,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.access_time_outlined, size: 16, color: isDark ? Colors.amber.shade300 : Colors.amber.shade800),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Waktu belum diatur',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.amber.shade300 : Colors.amber.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     const SizedBox(height: 6),
                     Text(
                       schedule.title,

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,7 @@ import 'package:titik_waktu/providers/schedule_provider.dart';
 import 'package:titik_waktu/services/ringtone_service.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/widgets/category_color_picker_field.dart';
+import 'package:titik_waktu/widgets/category_cover_picker.dart';
 import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 
 class ManageCategoriesScreen extends ConsumerWidget {
@@ -65,154 +67,148 @@ class ManageCategoriesScreen extends ConsumerWidget {
             );
           }
 
-          return ListView.separated(
+          return GridView.builder(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.95,
+            ),
             itemCount: categories.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final cat = categories[index];
               final catColor = AppColors.parseCategoryColor(cat.colorHex);
-
               final count = scheduleCounts[cat.id] ?? 0;
               final upcomingDates = upcomingDatesAsync.value?[cat.id] ?? [];
+              final cardBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+              final cardBorder = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+              final hasCover = cat.coverImageUri != null &&
+                  cat.coverImageUri!.isNotEmpty &&
+                  File(cat.coverImageUri!).existsSync();
 
               return Card(
                 clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: cardBorder, width: 0.5),
+                ),
+                margin: EdgeInsets.zero,
                 child: InkWell(
                   onTap: () => context.push('/categories/${cat.id}'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Baris atas: dot warna + nama kategori + jumlah total jadwal
-                        Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top 50%: Cover image or solid color fallback with gradient fade
+                      Expanded(
+                        flex: 1,
+                        child: Stack(
+                          fit: StackFit.expand,
                           children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: catColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                cat.name,
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                            if (hasCover)
+                              Image.file(
+                                File(cat.coverImageUri!),
+                                fit: BoxFit.cover,
+                              )
+                            else
+                              Container(
+                                color: catColor.withOpacity(0.35),
+                                child: Center(
+                                  child: Icon(
+                                    Icons.folder_outlined,
+                                    size: 32,
+                                    color: catColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Text(
-                              '$count jadwal',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary,
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      cardBg.withOpacity(0.85),
+                                      cardBg,
+                                    ],
+                                    stops: const [0.35, 0.85, 1.0],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 18,
-                              color: isDark
-                                  ? AppColors.darkTextSecondary
-                                  : AppColors.lightTextSecondary,
                             ),
                           ],
                         ),
-                        // Baris bawah: label kecil "Jadwal berikutnya" + chip tanggal (hanya jika ada jadwal mendatang)
-                        if (upcomingDates.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                      ),
+                      // Bottom 50%: Category details
+                      Expanded(
+                        flex: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Jadwal berikutnya',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.lightTextSecondary,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Wrap(
-                                  spacing: 6,
-                                  runSpacing: 4,
-                                  children: [
-                                    ...upcomingDates.take(2).map((date) {
-                                      final dateStr = DateFormat('d MMM').format(date);
-                                      return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? Colors.white.withValues(alpha: 0.08)
-                                              : Colors.black.withValues(alpha: 0.05),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isDark
-                                                ? AppColors.darkBorder
-                                                : AppColors.lightBorder,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          dateStr,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w500,
-                                            color: isDark
-                                                ? AppColors.darkTextPrimary
-                                                : AppColors.lightTextPrimary,
-                                          ),
-                                        ),
-                                      );
-                                    }),
-                                    if (upcomingDates.length > 2)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: isDark
-                                              ? Colors.white.withValues(alpha: 0.08)
-                                              : Colors.black.withValues(alpha: 0.05),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isDark
-                                                ? AppColors.darkBorder
-                                                : AppColors.lightBorder,
-                                            width: 0.5,
-                                          ),
-                                        ),
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(color: catColor, shape: BoxShape.circle),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
                                         child: Text(
-                                          '+${upcomingDates.length - 2}',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            fontSize: 11,
+                                          cat.name,
+                                          style: theme.textTheme.titleSmall?.copyWith(
                                             fontWeight: FontWeight.w600,
-                                            color: isDark
-                                                ? AppColors.amberDarkIndicator
-                                                : AppColors.amberLightIndicator,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 14),
+                                    child: Text(
+                                      '$count jadwal',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        fontSize: 11,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                              if (upcomingDates.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.06)
+                                        : Colors.black.withOpacity(0.04),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    DateFormat('d MMM', 'id').format(upcomingDates.first),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
-                        ],
-                      ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -258,6 +254,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
   late String _selectedHex;
   String? _selectedRingtoneUri;
   String? _selectedRingtoneTitle;
+  String? _selectedCoverUri;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -266,6 +263,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
     _nameController.text = widget.category?.name ?? '';
     _selectedHex = widget.category?.colorHex ?? AppColors.categoryOptions.first.hex;
     _selectedRingtoneUri = widget.category?.ringtoneUri;
+    _selectedCoverUri = widget.category?.coverImageUri;
     if (_selectedRingtoneUri != null && _selectedRingtoneUri!.isNotEmpty) {
       _loadRingtoneTitle(_selectedRingtoneUri!);
     }
@@ -415,6 +413,12 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
                   ),
                 ),
               ),
+            const SizedBox(height: 20),
+            CategoryCoverPicker(
+              initialImageUri: _selectedCoverUri,
+              onImageChanged: (uri) {
+                setState(() => _selectedCoverUri = uri);
+              },
             ),
             const SizedBox(height: 28),
             Row(
@@ -473,12 +477,14 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
           name: name,
           colorHex: _selectedHex,
           ringtoneUri: Value(_selectedRingtoneUri),
+          coverImageUri: Value(_selectedCoverUri),
         );
       } else {
         await repo.createCategory(
           name: name,
           colorHex: _selectedHex,
           ringtoneUri: _selectedRingtoneUri,
+          coverImageUri: _selectedCoverUri,
         );
       }
 

@@ -323,8 +323,8 @@ bool isScheduleOccurringOn(Schedule schedule, DateTime date) {
       schedule.startDate!.year,
       schedule.startDate!.month,
       schedule.startDate!.day,
-      schedule.time.hour,
-      schedule.time.minute,
+      schedule.time?.hour ?? 0,
+      schedule.time?.minute ?? 0,
     );
 
     final targetStartUtc = DateTime.utc(
@@ -371,13 +371,22 @@ final dailySchedulesProvider = Provider<AsyncValue<List<Schedule>>>((ref) {
     return schedules
         .where((s) => isScheduleOccurringOn(s, today))
         .toList()
-      ..sort((a, b) => a.time.compareTo(b.time));
+      ..sort((a, b) {
+        if (a.time == null && b.time == null) return 0;
+        if (a.time == null) return 1; // Waktu null ditaruh di akhir list
+        if (b.time == null) return -1;
+        return a.time!.compareTo(b.time!);
+      });
   });
 });
 
 /// Cari DateTime occurrence berikutnya dari schedule setelah [after].
-/// Iterate harian max 365 hari ke depan. Return null jika tidak ada.
+/// Iterate harian max 365 hari ke depan. Return null jika tidak ada atau time null.
 DateTime? findNextOccurrenceAfter(Schedule schedule, DateTime after) {
+  // Dikecualikan dari Hero Card jika waktu belum diatur
+  if (schedule.time == null) return null;
+  final time = schedule.time!;
+
   // Iterasi dari hari ini atau start date, cek tiap hari
   final startSearch = DateTime(after.year, after.month, after.day);
 
@@ -390,8 +399,8 @@ DateTime? findNextOccurrenceAfter(Schedule schedule, DateTime after) {
       checkDay.year,
       checkDay.month,
       checkDay.day,
-      schedule.time.hour,
-      schedule.time.minute,
+      time.hour,
+      time.minute,
     );
 
     // Kalau hari pertama (hari ini), cek apakah jamnya belum lewat
@@ -452,6 +461,7 @@ final categoryUpcomingDatesProvider =
 List<DateTime> _findNextNOccurrences(Schedule schedule, DateTime after, {int n = 10}) {
   final results = <DateTime>[];
   final startSearch = DateTime(after.year, after.month, after.day);
+  final time = schedule.time;
 
   for (int i = 0; i < 365 && results.length < n; i++) {
     final checkDay = startSearch.add(Duration(days: i));
@@ -461,11 +471,11 @@ List<DateTime> _findNextNOccurrences(Schedule schedule, DateTime after, {int n =
       checkDay.year,
       checkDay.month,
       checkDay.day,
-      schedule.time.hour,
-      schedule.time.minute,
+      time?.hour ?? 0,
+      time?.minute ?? 0,
     );
 
-    if (i == 0 && occurrenceDateTime.isBefore(after)) continue;
+    if (i == 0 && time != null && occurrenceDateTime.isBefore(after)) continue;
     results.add(occurrenceDateTime);
   }
   return results;

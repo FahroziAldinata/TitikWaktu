@@ -51,6 +51,11 @@ class BulkScheduleNotifier extends StateNotifier<BulkScheduleState> {
 
   BulkScheduleNotifier(this._repository) : super(const BulkScheduleState());
 
+  /// Reset state ke kondisi awal (kosong)
+  void reset() {
+    state = const BulkScheduleState();
+  }
+
   /// Toggle seleksi tanggal (normalized ke date-only, no time component)
   void toggleDate(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
@@ -123,18 +128,19 @@ class BulkScheduleNotifier extends StateNotifier<BulkScheduleState> {
 
   /// Simpan semua jadwal sebagai batch. Atomic — kalau satu gagal, semua batal.
   Future<List<Schedule>> saveBatch(Category category) async {
-    assert(state.allTimesSet, 'Semua tanggal harus sudah punya jam sebelum saveBatch dipanggil');
     state = state.copyWith(isSaving: true);
     try {
       final companions = sortedDates.map((date) {
-        final tod = state.timeMap[date]!;
-        final scheduleDateTime = DateTime(
-          date.year,
-          date.month,
-          date.day,
-          tod.hour,
-          tod.minute,
-        );
+        final tod = state.timeMap[date];
+        final scheduleDateTime = tod != null
+            ? DateTime(
+                date.year,
+                date.month,
+                date.day,
+                tod.hour,
+                tod.minute,
+              )
+            : null;
         final customTitle = (state.titleMap[date] ?? '').trim();
         final scheduleTitle =
             customTitle.isNotEmpty ? customTitle : category.name;
@@ -142,7 +148,7 @@ class BulkScheduleNotifier extends StateNotifier<BulkScheduleState> {
         return SchedulesCompanion(
           title: Value(scheduleTitle),
           time: Value(scheduleDateTime),
-          startDate: Value(scheduleDateTime),
+          startDate: Value(DateTime(date.year, date.month, date.day)),
           categoryId: Value(category.id),
           isActive: const Value(true),
           recurrenceType: Value(RecurrenceType.once.value),

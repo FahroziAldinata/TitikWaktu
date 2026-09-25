@@ -31,6 +31,17 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
   NotificationType _notificationType = NotificationType.notification;
 
   @override
+  void initState() {
+    super.initState();
+    // Pastikan state bulk schedule bersih saat masuk ke Slot Generator
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(bulkScheduleProvider.notifier).reset();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _countController.dispose();
     _itemInputController.dispose();
@@ -129,6 +140,11 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // PENTING: ref.watch di sini BUKAN untuk rebuild UI, melainkan menjaga
+    // lifecycle autoDispose bulkScheduleProvider tetap aktif (listener count >= 1)
+    // agar state tidak di-dispose prematur saat navigasi push ke BulkTimeSetterScreen.
+    ref.watch(bulkScheduleProvider);
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final catColor = AppColors.parseCategoryColor(widget.category.colorHex);
@@ -182,7 +198,7 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Buat jadwal berulang di jam yang sama, dengan konten yang bisa beda tiap kemunculan (misal main game atau nonton film bergantian).',
+                          'Buat jadwal berulang di jam yang sama, dengan konten yang bisa digilir tiap kemunculan (misal game, film, atau tugas kerja bergantian).',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: isDark
                                 ? AppColors.darkTextSecondary
@@ -499,7 +515,7 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Isi daftar hal yang mau digilir (misal nama game/film). Kosongkan kalau semua jadwal pakai nama yang sama.',
+              'Isi daftar hal yang mau digilir (misal nama game, judul film, tugas kerja, materi belajar, dst). Kosongkan jika semua jadwal memakai nama yang sama.',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -529,7 +545,7 @@ class _SlotGeneratorScreenState extends ConsumerState<SlotGeneratorScreen> {
                           textInputAction: TextInputAction.done,
                           onSubmitted: (_) => _addItem(),
                           decoration: InputDecoration(
-                            hintText: 'Contoh: Valorant, Mario Kart, Zelda...',
+                            hintText: 'Contoh: nama game, judul film, tugas kerja, dst...',
                             hintStyle: theme.textTheme.bodySmall?.copyWith(
                               color: isDark
                                   ? AppColors.darkTextSecondary.withValues(alpha: 0.6)

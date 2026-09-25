@@ -8,10 +8,11 @@ import '../migrations/migration_v2.dart';
 import '../migrations/migration_v3.dart';
 import '../migrations/migration_v4.dart';
 import '../migrations/migration_v5.dart';
+import '../migrations/migration_v6.dart';
 
 class DatabaseInitializer {
   static const String _dbName = 'app_database.sqlite';
-  static const int dbVersion = 5; // Current database version
+  static const int dbVersion = 6; // Current database version
 
   final List<Migration> _migrations = [
     MigrationV1(),
@@ -19,6 +20,7 @@ class DatabaseInitializer {
     MigrationV3(),
     MigrationV4(),
     MigrationV5(),
+    MigrationV6(),
   ];
 
   MigrationStrategy strategy(GeneratedDatabase db) {

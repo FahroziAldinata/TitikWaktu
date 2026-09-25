@@ -26,7 +26,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   final _descriptionController = TextEditingController();
   final _intervalController = TextEditingController(text: '1');
 
-  late TimeOfDay _selectedTime;
+  TimeOfDay? _selectedTime;
   DateTime _selectedDate = DateTime.now();
   NotificationType _notificationType = NotificationType.notification;
   RecurrenceType _recurrenceType = RecurrenceType.once;
@@ -112,7 +112,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         setState(() {
           _titleController.text = schedule.title;
           _descriptionController.text = schedule.description ?? '';
-          _selectedTime = TimeOfDay.fromDateTime(schedule.time);
+          _selectedTime = schedule.time != null ? TimeOfDay.fromDateTime(schedule.time!) : null;
           _selectedDate = schedule.startDate ?? DateTime.now();
           _notificationType = NotificationType.fromValue(schedule.notificationType);
           _recurrenceType = recType;
@@ -183,8 +183,9 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final categoriesAsync = ref.watch(categoryListProvider);
 
-    final timeString =
-        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+    final timeString = _selectedTime != null
+        ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+        : 'Atur Jam (Opsional)';
     final dateString = AppDateFormatter.formatFullDate(_selectedDate);
 
     return Scaffold(
@@ -232,15 +233,32 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Waktu Besar & Interaktif
-            Text(
-              'WAKTU',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.2,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-              ),
+            // Waktu Besar & Interaktif (Opsional)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'WAKTU (OPSIONAL)',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
+                ),
+                if (_selectedTime != null)
+                  TextButton.icon(
+                    onPressed: () => setState(() => _selectedTime = null),
+                    icon: const Icon(Icons.clear, size: 14),
+                    label: const Text('Hapus Jam', style: TextStyle(fontSize: 11)),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(40, 24),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: Colors.redAccent,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             InkWell(
@@ -256,42 +274,60 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
                     width: 0.5,
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      timeString,
-                      style: TextStyle(
-                        fontSize: 38,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -1.0,
-                        color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                child: _selectedTime != null
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            timeString,
+                            style: TextStyle(
+                              fontSize: 38,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: -1.0,
+                              color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove_circle_outline, size: 26),
+                                tooltip: '-1 Menit',
+                                onPressed: () {
+                                  final dt = DateTime(2026, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
+                                      .subtract(const Duration(minutes: 1));
+                                  setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, size: 26),
+                                tooltip: '+1 Menit',
+                                onPressed: () {
+                                  final dt = DateTime(2026, 1, 1, _selectedTime!.hour, _selectedTime!.minute)
+                                      .add(const Duration(minutes: 1));
+                                  setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.access_time_outlined, size: 20, color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sentuh untuk atur jam (opsional)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, size: 26),
-                          tooltip: '-1 Menit',
-                          onPressed: () {
-                            final dt = DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute)
-                                .subtract(const Duration(minutes: 1));
-                            setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.add_circle_outline, size: 26),
-                          tooltip: '+1 Menit',
-                          onPressed: () {
-                            final dt = DateTime(2026, 1, 1, _selectedTime.hour, _selectedTime.minute)
-                                .add(const Duration(minutes: 1));
-                            setState(() => _selectedTime = TimeOfDay(hour: dt.hour, minute: dt.minute));
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -1026,7 +1062,7 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
   Future<void> _selectTime() async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: _selectedTime ?? TimeOfDay.now(),
       initialEntryMode: TimePickerEntryMode.dial,
     );
     if (picked != null) {
@@ -1071,7 +1107,9 @@ class _AddScheduleScreenState extends ConsumerState<AddScheduleScreen> {
         id: scheduleIdInt,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-        time: DateTime(0, 0, 0, _selectedTime.hour, _selectedTime.minute),
+        time: _selectedTime != null
+            ? DateTime(0, 0, 0, _selectedTime!.hour, _selectedTime!.minute)
+            : null,
         startDate: _selectedDate,
         notificationType: _notificationType.value,
         color: _selectedColor ?? 0xFFFFFFFF,

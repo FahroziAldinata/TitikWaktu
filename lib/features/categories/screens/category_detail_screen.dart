@@ -11,6 +11,7 @@ import 'package:titik_waktu/services/ringtone_service.dart';
 import 'package:titik_waktu/theme/app_colors.dart';
 import 'package:titik_waktu/utils/date_format_helper.dart';
 import 'package:titik_waktu/widgets/category_color_picker_field.dart';
+import 'package:titik_waktu/widgets/category_cover_picker.dart';
 import 'package:titik_waktu/widgets/ringtone_picker_sheet.dart';
 import 'package:titik_waktu/widgets/schedule_slidable.dart';
 
@@ -150,8 +151,8 @@ class CategoryDetailScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final s = schedules[index];
-                final dateStr = AppDateFormatter.formatFullDate(s.startDate ?? s.time);
-                final timeStr = AppDateFormatter.formatTime(s.time);
+                final dateStr = AppDateFormatter.formatFullDate(s.startDate ?? s.time ?? DateTime.now());
+                final timeStr = s.time != null ? AppDateFormatter.formatTime(s.time!) : 'Waktu belum diatur';
                 final isActive = s.isActive;
                 final effectiveCatColor = isActive ? catColor : catColor.withValues(alpha: 0.35);
                 final effectiveTitleColor = isActive
@@ -196,16 +197,33 @@ class CategoryDetailScreen extends ConsumerWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            timeStr,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'monospace',
-                              color: isActive
-                                  ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
-                                  : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7)),
+                          if (s.time != null)
+                            Text(
+                              timeStr,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
+                                color: isActive
+                                    ? (isDark ? AppColors.amberDarkIndicator : AppColors.amberLightIndicator)
+                                    : (isDark ? AppColors.darkTextSecondary.withValues(alpha: 0.6) : AppColors.lightTextSecondary.withValues(alpha: 0.7)),
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.amber.withOpacity(0.12) : Colors.amber.shade50,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Tanpa jam',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? Colors.amber.shade300 : Colors.amber.shade800,
+                                ),
+                              ),
                             ),
-                          ),
                           const SizedBox(width: 8),
                           Switch(
                             value: isActive,
@@ -430,6 +448,7 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
   late String _selectedHex;
   String? _selectedRingtoneUri;
   String? _selectedRingtoneTitle;
+  String? _selectedCoverUri;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -438,6 +457,7 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
     _nameController.text = widget.category.name;
     _selectedHex = widget.category.colorHex;
     _selectedRingtoneUri = widget.category.ringtoneUri;
+    _selectedCoverUri = widget.category.coverImageUri;
     if (_selectedRingtoneUri != null && _selectedRingtoneUri!.isNotEmpty) {
       _loadRingtoneTitle(_selectedRingtoneUri!);
     }
@@ -573,6 +593,12 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
                   ),
                 ),
               ),
+            const SizedBox(height: 20),
+            CategoryCoverPicker(
+              initialImageUri: _selectedCoverUri,
+              onImageChanged: (uri) {
+                setState(() => _selectedCoverUri = uri);
+              },
             ),
             const SizedBox(height: 28),
             Row(
@@ -634,6 +660,7 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
         name: _nameController.text.trim(),
         colorHex: _selectedHex,
         ringtoneUri: Value(_selectedRingtoneUri),
+        coverImageUri: Value(_selectedCoverUri),
       );
       if (mounted) Navigator.pop(context);
     }

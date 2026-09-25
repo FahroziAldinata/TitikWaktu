@@ -21,12 +21,14 @@ class CategoryRepository {
     required String name,
     required String colorHex,
     String? ringtoneUri,
+    String? coverImageUri,
   }) {
     return _dao.insertCategory(
       CategoriesCompanion(
         name: Value(name),
         colorHex: Value(colorHex),
         ringtoneUri: Value(ringtoneUri),
+        coverImageUri: Value(coverImageUri),
       ),
     );
   }
@@ -37,6 +39,7 @@ class CategoryRepository {
     required String name,
     required String colorHex,
     Value<String?> ringtoneUri = const Value.absent(),
+    Value<String?> coverImageUri = const Value.absent(),
   }) {
     return _dao.updateCategory(
       CategoriesCompanion(
@@ -44,6 +47,7 @@ class CategoryRepository {
         name: Value(name),
         colorHex: Value(colorHex),
         ringtoneUri: ringtoneUri,
+        coverImageUri: coverImageUri,
       ),
     );
   }

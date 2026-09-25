@@ -71,17 +71,19 @@ class AlarmService {
 
   Future<bool> scheduleAlarm(Schedule schedule, {String? ringtoneUri}) async {
     if (!schedule.isActive) return false;
+    if (schedule.time == null) return false;
 
     final hasPermissions = await _checkRequiredPermissions(schedule);
     if (!hasPermissions) return false;
 
+    final time = schedule.time!;
     final now = DateTime.now();
     DateTime scheduledTime = DateTime(
       schedule.startDate?.year ?? now.year,
       schedule.startDate?.month ?? now.month,
       schedule.startDate?.day ?? now.day,
-      schedule.time.hour,
-      schedule.time.minute,
+      time.hour,
+      time.minute,
     );
 
     if (scheduledTime.isBefore(now)) {
@@ -89,8 +91,8 @@ class AlarmService {
         now.year,
         now.month,
         now.day,
-        schedule.time.hour,
-        schedule.time.minute,
+        time.hour,
+        time.minute,
       );
       if (todayTime.isAfter(now)) {
         scheduledTime = todayTime;

@@ -15,6 +15,7 @@ class Categories extends Table {
   TextColumn get name => text()();
   TextColumn get colorHex => text()();
   TextColumn get ringtoneUri => text().nullable()();
+  TextColumn get coverImageUri => text().nullable()();
 }
 
 @DataClassName('Schedule')
@@ -22,7 +23,7 @@ class Schedules extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get title => text()();
   TextColumn get description => text().nullable()();
-  DateTimeColumn get time => dateTime()();
+  DateTimeColumn get time => dateTime().nullable()();
   DateTimeColumn get startDate => dateTime().nullable()();
   DateTimeColumn get endDate => dateTime().nullable()();
   IntColumn get notificationType => integer().nullable().withDefault(const Constant(0))();

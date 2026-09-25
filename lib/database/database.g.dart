@@ -32,8 +32,8 @@ class $SchedulesTable extends Schedules
   static const VerificationMeta _timeMeta = const VerificationMeta('time');
   @override
   late final GeneratedColumn<DateTime> time = GeneratedColumn<DateTime>(
-      'time', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      'time', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _startDateMeta =
       const VerificationMeta('startDate');
   @override
@@ -208,8 +208,6 @@ class $SchedulesTable extends Schedules
     if (data.containsKey('time')) {
       context.handle(
           _timeMeta, time.isAcceptableOrUnknown(data['time']!, _timeMeta));
-    } else if (isInserting) {
-      context.missing(_timeMeta);
     }
     if (data.containsKey('start_date')) {
       context.handle(_startDateMeta,
@@ -317,7 +315,7 @@ class $SchedulesTable extends Schedules
       description: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}description']),
       time: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}time'])!,
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}time']),
       startDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}start_date']),
       endDate: attachedDatabase.typeMapping
@@ -367,7 +365,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
   final int id;
   final String title;
   final String? description;
-  final DateTime time;
+  final DateTime? time;
   final DateTime? startDate;
   final DateTime? endDate;
   final int? notificationType;
@@ -390,7 +388,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       {required this.id,
       required this.title,
       this.description,
-      required this.time,
+      this.time,
       this.startDate,
       this.endDate,
       this.notificationType,
@@ -417,7 +415,9 @@ class Schedule extends DataClass implements Insertable<Schedule> {
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
-    map['time'] = Variable<DateTime>(time);
+    if (!nullToAbsent || time != null) {
+      map['time'] = Variable<DateTime>(time);
+    }
     if (!nullToAbsent || startDate != null) {
       map['start_date'] = Variable<DateTime>(startDate);
     }
@@ -476,7 +476,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
-      time: Value(time),
+      time: time == null && nullToAbsent ? const Value.absent() : Value(time),
       startDate: startDate == null && nullToAbsent
           ? const Value.absent()
           : Value(startDate),
@@ -534,7 +534,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String?>(json['description']),
-      time: serializer.fromJson<DateTime>(json['time']),
+      time: serializer.fromJson<DateTime?>(json['time']),
       startDate: serializer.fromJson<DateTime?>(json['startDate']),
       endDate: serializer.fromJson<DateTime?>(json['endDate']),
       notificationType: serializer.fromJson<int?>(json['notificationType']),
@@ -562,7 +562,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String?>(description),
-      'time': serializer.toJson<DateTime>(time),
+      'time': serializer.toJson<DateTime?>(time),
       'startDate': serializer.toJson<DateTime?>(startDate),
       'endDate': serializer.toJson<DateTime?>(endDate),
       'notificationType': serializer.toJson<int?>(notificationType),
@@ -588,7 +588,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
           {int? id,
           String? title,
           Value<String?> description = const Value.absent(),
-          DateTime? time,
+          Value<DateTime?> time = const Value.absent(),
           Value<DateTime?> startDate = const Value.absent(),
           Value<DateTime?> endDate = const Value.absent(),
           Value<int?> notificationType = const Value.absent(),
@@ -611,7 +611,7 @@ class Schedule extends DataClass implements Insertable<Schedule> {
         id: id ?? this.id,
         title: title ?? this.title,
         description: description.present ? description.value : this.description,
-        time: time ?? this.time,
+        time: time.present ? time.value : this.time,
         startDate: startDate.present ? startDate.value : this.startDate,
         endDate: endDate.present ? endDate.value : this.endDate,
         notificationType: notificationType.present
@@ -768,7 +768,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
   final Value<int> id;
   final Value<String> title;
   final Value<String?> description;
-  final Value<DateTime> time;
+  final Value<DateTime?> time;
   final Value<DateTime?> startDate;
   final Value<DateTime?> endDate;
   final Value<int?> notificationType;
@@ -815,7 +815,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.id = const Value.absent(),
     required String title,
     this.description = const Value.absent(),
-    required DateTime time,
+    this.time = const Value.absent(),
     this.startDate = const Value.absent(),
     this.endDate = const Value.absent(),
     this.notificationType = const Value.absent(),
@@ -834,8 +834,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
     this.categoryId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-  })  : title = Value(title),
-        time = Value(time);
+  }) : title = Value(title);
   static Insertable<Schedule> custom({
     Expression<int>? id,
     Expression<String>? title,
@@ -890,7 +889,7 @@ class SchedulesCompanion extends UpdateCompanion<Schedule> {
       {Value<int>? id,
       Value<String>? title,
       Value<String?>? description,
-      Value<DateTime>? time,
+      Value<DateTime?>? time,
       Value<DateTime?>? startDate,
       Value<DateTime?>? endDate,
       Value<int?>? notificationType,
@@ -1284,8 +1283,15 @@ class $CategoriesTable extends Categories
   late final GeneratedColumn<String> ringtoneUri = GeneratedColumn<String>(
       'ringtone_uri', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _coverImageUriMeta =
+      const VerificationMeta('coverImageUri');
   @override
-  List<GeneratedColumn> get $columns => [id, name, colorHex, ringtoneUri];
+  late final GeneratedColumn<String> coverImageUri = GeneratedColumn<String>(
+      'cover_image_uri', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, name, colorHex, ringtoneUri, coverImageUri];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1317,6 +1323,12 @@ class $CategoriesTable extends Categories
           ringtoneUri.isAcceptableOrUnknown(
               data['ringtone_uri']!, _ringtoneUriMeta));
     }
+    if (data.containsKey('cover_image_uri')) {
+      context.handle(
+          _coverImageUriMeta,
+          coverImageUri.isAcceptableOrUnknown(
+              data['cover_image_uri']!, _coverImageUriMeta));
+    }
     return context;
   }
 
@@ -1334,6 +1346,8 @@ class $CategoriesTable extends Categories
           .read(DriftSqlType.string, data['${effectivePrefix}color_hex'])!,
       ringtoneUri: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}ringtone_uri']),
+      coverImageUri: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}cover_image_uri']),
     );
   }
 
@@ -1348,11 +1362,13 @@ class Category extends DataClass implements Insertable<Category> {
   final String name;
   final String colorHex;
   final String? ringtoneUri;
+  final String? coverImageUri;
   const Category(
       {required this.id,
       required this.name,
       required this.colorHex,
-      this.ringtoneUri});
+      this.ringtoneUri,
+      this.coverImageUri});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1361,6 +1377,9 @@ class Category extends DataClass implements Insertable<Category> {
     map['color_hex'] = Variable<String>(colorHex);
     if (!nullToAbsent || ringtoneUri != null) {
       map['ringtone_uri'] = Variable<String>(ringtoneUri);
+    }
+    if (!nullToAbsent || coverImageUri != null) {
+      map['cover_image_uri'] = Variable<String>(coverImageUri);
     }
     return map;
   }
@@ -1373,6 +1392,9 @@ class Category extends DataClass implements Insertable<Category> {
       ringtoneUri: ringtoneUri == null && nullToAbsent
           ? const Value.absent()
           : Value(ringtoneUri),
+      coverImageUri: coverImageUri == null && nullToAbsent
+          ? const Value.absent()
+          : Value(coverImageUri),
     );
   }
 
@@ -1384,6 +1406,7 @@ class Category extends DataClass implements Insertable<Category> {
       name: serializer.fromJson<String>(json['name']),
       colorHex: serializer.fromJson<String>(json['colorHex']),
       ringtoneUri: serializer.fromJson<String?>(json['ringtoneUri']),
+      coverImageUri: serializer.fromJson<String?>(json['coverImageUri']),
     );
   }
   @override
@@ -1394,6 +1417,7 @@ class Category extends DataClass implements Insertable<Category> {
       'name': serializer.toJson<String>(name),
       'colorHex': serializer.toJson<String>(colorHex),
       'ringtoneUri': serializer.toJson<String?>(ringtoneUri),
+      'coverImageUri': serializer.toJson<String?>(coverImageUri),
     };
   }
 
@@ -1401,12 +1425,15 @@ class Category extends DataClass implements Insertable<Category> {
           {int? id,
           String? name,
           String? colorHex,
-          Value<String?> ringtoneUri = const Value.absent()}) =>
+          Value<String?> ringtoneUri = const Value.absent(),
+          Value<String?> coverImageUri = const Value.absent()}) =>
       Category(
         id: id ?? this.id,
         name: name ?? this.name,
         colorHex: colorHex ?? this.colorHex,
         ringtoneUri: ringtoneUri.present ? ringtoneUri.value : this.ringtoneUri,
+        coverImageUri:
+            coverImageUri.present ? coverImageUri.value : this.coverImageUri,
       );
   Category copyWithCompanion(CategoriesCompanion data) {
     return Category(
@@ -1415,6 +1442,9 @@ class Category extends DataClass implements Insertable<Category> {
       colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
       ringtoneUri:
           data.ringtoneUri.present ? data.ringtoneUri.value : this.ringtoneUri,
+      coverImageUri: data.coverImageUri.present
+          ? data.coverImageUri.value
+          : this.coverImageUri,
     );
   }
 
@@ -1424,13 +1454,15 @@ class Category extends DataClass implements Insertable<Category> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('colorHex: $colorHex, ')
-          ..write('ringtoneUri: $ringtoneUri')
+          ..write('ringtoneUri: $ringtoneUri, ')
+          ..write('coverImageUri: $coverImageUri')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, colorHex, ringtoneUri);
+  int get hashCode =>
+      Object.hash(id, name, colorHex, ringtoneUri, coverImageUri);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1438,7 +1470,8 @@ class Category extends DataClass implements Insertable<Category> {
           other.id == this.id &&
           other.name == this.name &&
           other.colorHex == this.colorHex &&
-          other.ringtoneUri == this.ringtoneUri);
+          other.ringtoneUri == this.ringtoneUri &&
+          other.coverImageUri == this.coverImageUri);
 }
 
 class CategoriesCompanion extends UpdateCompanion<Category> {
@@ -1446,17 +1479,20 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
   final Value<String> name;
   final Value<String> colorHex;
   final Value<String?> ringtoneUri;
+  final Value<String?> coverImageUri;
   const CategoriesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.colorHex = const Value.absent(),
     this.ringtoneUri = const Value.absent(),
+    this.coverImageUri = const Value.absent(),
   });
   CategoriesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required String colorHex,
     this.ringtoneUri = const Value.absent(),
+    this.coverImageUri = const Value.absent(),
   })  : name = Value(name),
         colorHex = Value(colorHex);
   static Insertable<Category> custom({
@@ -1464,12 +1500,14 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     Expression<String>? name,
     Expression<String>? colorHex,
     Expression<String>? ringtoneUri,
+    Expression<String>? coverImageUri,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (colorHex != null) 'color_hex': colorHex,
       if (ringtoneUri != null) 'ringtone_uri': ringtoneUri,
+      if (coverImageUri != null) 'cover_image_uri': coverImageUri,
     });
   }
 
@@ -1477,12 +1515,14 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
       {Value<int>? id,
       Value<String>? name,
       Value<String>? colorHex,
-      Value<String?>? ringtoneUri}) {
+      Value<String?>? ringtoneUri,
+      Value<String?>? coverImageUri}) {
     return CategoriesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       colorHex: colorHex ?? this.colorHex,
       ringtoneUri: ringtoneUri ?? this.ringtoneUri,
+      coverImageUri: coverImageUri ?? this.coverImageUri,
     );
   }
 
@@ -1501,6 +1541,9 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
     if (ringtoneUri.present) {
       map['ringtone_uri'] = Variable<String>(ringtoneUri.value);
     }
+    if (coverImageUri.present) {
+      map['cover_image_uri'] = Variable<String>(coverImageUri.value);
+    }
     return map;
   }
 
@@ -1510,7 +1553,8 @@ class CategoriesCompanion extends UpdateCompanion<Category> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('colorHex: $colorHex, ')
-          ..write('ringtoneUri: $ringtoneUri')
+          ..write('ringtoneUri: $ringtoneUri, ')
+          ..write('coverImageUri: $coverImageUri')
           ..write(')'))
         .toString();
   }
@@ -1536,7 +1580,7 @@ typedef $$SchedulesTableCreateCompanionBuilder = SchedulesCompanion Function({
   Value<int> id,
   required String title,
   Value<String?> description,
-  required DateTime time,
+  Value<DateTime?> time,
   Value<DateTime?> startDate,
   Value<DateTime?> endDate,
   Value<int?> notificationType,
@@ -1560,7 +1604,7 @@ typedef $$SchedulesTableUpdateCompanionBuilder = SchedulesCompanion Function({
   Value<int> id,
   Value<String> title,
   Value<String?> description,
-  Value<DateTime> time,
+  Value<DateTime?> time,
   Value<DateTime?> startDate,
   Value<DateTime?> endDate,
   Value<int?> notificationType,
@@ -1846,7 +1890,7 @@ class $$SchedulesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String?> description = const Value.absent(),
-            Value<DateTime> time = const Value.absent(),
+            Value<DateTime?> time = const Value.absent(),
             Value<DateTime?> startDate = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
             Value<int?> notificationType = const Value.absent(),
@@ -1894,7 +1938,7 @@ class $$SchedulesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required String title,
             Value<String?> description = const Value.absent(),
-            required DateTime time,
+            Value<DateTime?> time = const Value.absent(),
             Value<DateTime?> startDate = const Value.absent(),
             Value<DateTime?> endDate = const Value.absent(),
             Value<int?> notificationType = const Value.absent(),
@@ -2093,12 +2137,14 @@ typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   required String name,
   required String colorHex,
   Value<String?> ringtoneUri,
+  Value<String?> coverImageUri,
 });
 typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<String> colorHex,
   Value<String?> ringtoneUri,
+  Value<String?> coverImageUri,
 });
 
 class $$CategoriesTableFilterComposer
@@ -2121,6 +2167,9 @@ class $$CategoriesTableFilterComposer
 
   ColumnFilters<String> get ringtoneUri => $composableBuilder(
       column: $table.ringtoneUri, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get coverImageUri => $composableBuilder(
+      column: $table.coverImageUri, builder: (column) => ColumnFilters(column));
 }
 
 class $$CategoriesTableOrderingComposer
@@ -2143,6 +2192,10 @@ class $$CategoriesTableOrderingComposer
 
   ColumnOrderings<String> get ringtoneUri => $composableBuilder(
       column: $table.ringtoneUri, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get coverImageUri => $composableBuilder(
+      column: $table.coverImageUri,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$CategoriesTableAnnotationComposer
@@ -2165,6 +2218,9 @@ class $$CategoriesTableAnnotationComposer
 
   GeneratedColumn<String> get ringtoneUri => $composableBuilder(
       column: $table.ringtoneUri, builder: (column) => column);
+
+  GeneratedColumn<String> get coverImageUri => $composableBuilder(
+      column: $table.coverImageUri, builder: (column) => column);
 }
 
 class $$CategoriesTableTableManager extends RootTableManager<
@@ -2194,24 +2250,28 @@ class $$CategoriesTableTableManager extends RootTableManager<
             Value<String> name = const Value.absent(),
             Value<String> colorHex = const Value.absent(),
             Value<String?> ringtoneUri = const Value.absent(),
+            Value<String?> coverImageUri = const Value.absent(),
           }) =>
               CategoriesCompanion(
             id: id,
             name: name,
             colorHex: colorHex,
             ringtoneUri: ringtoneUri,
+            coverImageUri: coverImageUri,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required String colorHex,
             Value<String?> ringtoneUri = const Value.absent(),
+            Value<String?> coverImageUri = const Value.absent(),
           }) =>
               CategoriesCompanion.insert(
             id: id,
             name: name,
             colorHex: colorHex,
             ringtoneUri: ringtoneUri,
+            coverImageUri: coverImageUri,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

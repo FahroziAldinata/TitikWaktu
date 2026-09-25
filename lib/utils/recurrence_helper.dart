@@ -354,12 +354,14 @@ class RecurrenceHelper {
       final isException = exceptionSet.contains(origKey);
       final isRescheduled = rescheduledMap.containsKey(origKey);
 
+      final hour = schedule.time?.hour ?? 0;
+      final minute = schedule.time?.minute ?? 0;
       DateTime actualDateTime = DateTime(
         startDay.year,
         startDay.month,
         startDay.day,
-        schedule.time.hour,
-        schedule.time.minute,
+        hour,
+        minute,
       );
 
       if (isRescheduled) {
@@ -380,12 +382,14 @@ class RecurrenceHelper {
     // Case 2: Recurring with RRULE
     try {
       final rrule = RecurrenceRule.fromString(schedule.recurrenceRule!);
+      final hour = schedule.time?.hour ?? 0;
+      final minute = schedule.time?.minute ?? 0;
       final startUtc = DateTime.utc(
         startDay.year,
         startDay.month,
         startDay.day,
-        schedule.time.hour,
-        schedule.time.minute,
+        hour,
+        minute,
       );
 
       // Search up to 2 years ahead or until limit is satisfied
@@ -424,12 +428,14 @@ class RecurrenceHelper {
         final isException = exceptionSet.contains(origKey);
         final isRescheduled = rescheduledMap.containsKey(origKey);
 
+        final hour = schedule.time?.hour ?? 0;
+        final minute = schedule.time?.minute ?? 0;
         DateTime actualDt = DateTime(
           origDate.year,
           origDate.month,
           origDate.day,
-          schedule.time.hour,
-          schedule.time.minute,
+          hour,
+          minute,
         );
 
         if (isRescheduled) {
@@ -506,17 +512,19 @@ class RecurrenceHelper {
         schedule.recurrenceType == RecurrenceType.once.value ||
         schedule.recurrenceType == RecurrenceType.none.value) {
       if (startDay.isAtSameMomentAs(targetDate)) {
-        return OccurrenceInfo(
-          originalDate: startDay,
-          actualDateTime: DateTime(
-            targetDate.year,
-            targetDate.month,
-            targetDate.day,
-            schedule.time.hour,
-            schedule.time.minute,
-          ),
-          isRescheduled: false,
-        );
+          final hour = schedule.time?.hour ?? 0;
+          final minute = schedule.time?.minute ?? 0;
+          return OccurrenceInfo(
+            originalDate: startDay,
+            actualDateTime: DateTime(
+              targetDate.year,
+              targetDate.month,
+              targetDate.day,
+              hour,
+              minute,
+            ),
+            isRescheduled: false,
+          );
       }
       return null;
     }
@@ -526,12 +534,14 @@ class RecurrenceHelper {
       if (targetDate.isBefore(startDay)) return null;
 
       final rrule = RecurrenceRule.fromString(schedule.recurrenceRule!);
+      final hour = schedule.time?.hour ?? 0;
+      final minute = schedule.time?.minute ?? 0;
       final startUtc = DateTime.utc(
         startDay.year,
         startDay.month,
         startDay.day,
-        schedule.time.hour,
-        schedule.time.minute,
+        hour,
+        minute,
       );
       final dayStartUtc = DateTime.utc(targetDate.year, targetDate.month, targetDate.day, 0, 0, 0);
       final dayEndUtc = DateTime.utc(targetDate.year, targetDate.month, targetDate.day, 23, 59, 59);
@@ -551,8 +561,8 @@ class RecurrenceHelper {
             targetDate.year,
             targetDate.month,
             targetDate.day,
-            schedule.time.hour,
-            schedule.time.minute,
+            hour,
+            minute,
           ),
           isRescheduled: false,
         );

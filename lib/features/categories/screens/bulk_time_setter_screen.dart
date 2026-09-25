@@ -291,7 +291,7 @@ class BulkTimeSetterScreen extends ConsumerWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: (allSet && !bulkState.isSaving)
+                  onPressed: (count > 0 && !bulkState.isSaving)
                       ? () => _saveBatch(context, ref)
                       : null,
                   style: FilledButton.styleFrom(
@@ -314,9 +314,7 @@ class BulkTimeSetterScreen extends ConsumerWidget {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : Text(
-                          allSet
-                              ? 'Simpan Semua ($count Jadwal)'
-                              : 'Isi semua jam dulu',
+                          'Simpan Semua ($count Jadwal)',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
