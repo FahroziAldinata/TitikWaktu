@@ -13,7 +13,7 @@ class CategoryColorPickerField extends StatelessWidget {
   });
 
   String _toHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
   void _openCustomColorPicker(BuildContext context) {
@@ -24,7 +24,6 @@ class CategoryColorPickerField extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
-            final isDark = Theme.of(dialogContext).brightness == Brightness.dark;
             final luminance = pickerColor.computeLuminance();
             final isLowContrastLight = luminance > 0.82;
             final isLowContrastDark = luminance < 0.12;

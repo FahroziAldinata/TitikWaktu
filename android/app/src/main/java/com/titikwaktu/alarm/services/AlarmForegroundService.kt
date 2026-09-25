@@ -58,7 +58,7 @@ class AlarmForegroundService : Service() {
         // Panggil startActivity langsung untuk skenario layar menyala / tidak terkunci
         try {
             val directIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 putExtra(AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
                 putExtra(AlarmRingingActivity.EXTRA_TITLE, title)
                 putExtra(AlarmRingingActivity.EXTRA_DESCRIPTION, description)
@@ -134,7 +134,7 @@ class AlarmForegroundService : Service() {
         )
         
         val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             putExtra(AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
             putExtra(AlarmRingingActivity.EXTRA_TITLE, title)
             putExtra(AlarmRingingActivity.EXTRA_DESCRIPTION, description)

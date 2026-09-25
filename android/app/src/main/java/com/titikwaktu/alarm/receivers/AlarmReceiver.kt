@@ -38,7 +38,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // Direct startActivity saat alarm wake up dari AlarmManager
         try {
             val activityIntent = Intent(context, com.titikwaktu.alarm.AlarmRingingActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_SCHEDULE_ID, scheduleId)
                 putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_TITLE, title)
                 putExtra(com.titikwaktu.alarm.AlarmRingingActivity.EXTRA_DESCRIPTION, description)
