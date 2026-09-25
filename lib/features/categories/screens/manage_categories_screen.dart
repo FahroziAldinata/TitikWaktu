@@ -413,6 +413,7 @@ class _CategoryFormSheetState extends ConsumerState<_CategoryFormSheet> {
                   ),
                 ),
               ),
+            ),
             const SizedBox(height: 20),
             CategoryCoverPicker(
               initialImageUri: _selectedCoverUri,

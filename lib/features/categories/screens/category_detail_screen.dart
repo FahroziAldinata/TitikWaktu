@@ -593,6 +593,7 @@ class _CategoryEditSheetState extends ConsumerState<_CategoryEditSheet> {
                   ),
                 ),
               ),
+            ),
             const SizedBox(height: 20),
             CategoryCoverPicker(
               initialImageUri: _selectedCoverUri,

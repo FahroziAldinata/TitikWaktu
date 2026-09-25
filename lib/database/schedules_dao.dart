@@ -66,7 +66,7 @@ class SchedulesDao extends DatabaseAccessor<AppDatabase> with _$SchedulesDaoMixi
     return into(schedules).insert(
       SchedulesCompanion.insert(
         title: title,
-        time: time,
+        time: Value(time),
       ),
     );
   }
